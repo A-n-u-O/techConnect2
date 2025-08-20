@@ -21,7 +21,9 @@ export default function Page() {
     e.preventDefault();
     setIsLoading(true);
     setError("");
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       setError("You must be logged in to add an entry.");
       setIsLoading(false);
@@ -35,8 +37,8 @@ export default function Page() {
     } else {
       setTitle("");
       setCategory("");
-        setDescription("");
-        console.log("Successfully added entry")
+      setDescription("");
+      console.log("Successfully added entry");
     }
     setIsLoading(false);
   }
@@ -74,51 +76,74 @@ export default function Page() {
                     required
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
-                    className="border rounded px-3 py-2"
-                  >
+                    className="border rounded px-3 py-2">
                     <option value="">Select category</option>
-                    <option value="Front-end Web Development">
+                    <option
+                      value="Front-end Web Development"
+                      className="text-xl">
                       Front-end Web Development
                     </option>
-                    <option value="Back-end Web Development">
+                    <option
+                      value="Back-end Web Development"
+                      className="text-xl">
                       Back-end Web Development
                     </option>
-                    <option value="Full-Stack Web Development">
+                    <option
+                      value="Full-Stack Web Development"
+                      className="text-xl">
                       Full-Stack Web Development
                     </option>
-                    <option value="Mobile Development">
+                    <option value="Mobile Development" className="text-xl">
                       Mobile Development
                     </option>
-                    <option value="UI/UX">UI/UX</option>
-                    <option value="Technical Writing">Technical Writing</option>
-                    <option value="Product Design">Product Design</option>
-                    <option value="Product Management">
+                    <option value="UI/UX" className="text-xl">
+                      UI/UX
+                    </option>
+                    <option value="Technical Writing" className="text-xl">
+                      Technical Writing
+                    </option>
+                    <option value="Product Design" className="text-xl">
+                      Product Design
+                    </option>
+                    <option value="Product Management" className="text-xl">
                       Product Management
                     </option>
-                    <option value="Data Science/Machine Learning">
+                    <option
+                      value="Data Science/Machine Learning"
+                      className="text-xl">
                       Data Science / Machine Learning
                     </option>
-                    <option value="Artificial Intelligence">
+                    <option value="Artificial Intelligence" className="text-xl">
                       Artificial Intelligence
                     </option>
-                    <option value="Cloud Computing/DevOps">
+                    <option value="Cloud Computing/DevOps" className="text-xl">
                       Cloud Computing/DevOps
                     </option>
-                    <option value="Networking/Network Security">
+                    <option
+                      value="Networking/Network Security"
+                      className="text-xl">
                       Networking/Network Security
                     </option>
-                    <option value="Game Development">Game Development</option>
-                    <option value="Embedded Systems/IoT">
+                    <option value="Game Development" className="text-xl">
+                      Game Development
+                    </option>
+                    <option value="Embedded Systems/IoT"  className="text-xl">
                       Embedded Systems/IoT
                     </option>
-                    <option value="Database Administration (SQL/NoSQL)">
+                    <option
+                      value="Database Administration (SQL/NoSQL)"
+                      className="text-xl">
                       Database Administration (SQL/NoSQL)
                     </option>
-                    <option value="AR/VR Development">AR/VR Development</option>
-                    <option value="Blockchain / Web3 Development">
+                    <option value="AR/VR Development" className="text-xl">
+                      AR/VR Development
+                    </option>
+                    <option
+                      value="Blockchain / Web3 Development"
+                      className="text-xl">
                       Blockchain / Web3 Development
                     </option>
-                    <option value="Cybersecurity">
+                    <option value="Cybersecurity" className="text-xl">
                       Cybersecurity
                     </option>
                   </select>
