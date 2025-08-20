@@ -29,7 +29,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.className} antialiased`}>
-        <MantineProvider withGlobalStyles withNormalizeCSS>
+        <MantineProvider >
+
           <ThemeProvider
             attribute="class"
             defaultTheme="system"

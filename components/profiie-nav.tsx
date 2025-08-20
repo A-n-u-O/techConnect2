@@ -49,6 +49,14 @@ export default function ProfileNav() {
               >
                 <Link href="/protected">Profiles</Link>
               </Tabs.Tab>
+              <Tabs.Tab
+                value="/protected"
+                ref={setControlRef("/protected")}
+                className={classes.tab}
+              >
+                <Link href="/profile">Your Account</Link>
+              </Tabs.Tab>
+
 
               <FloatingIndicator
                 target={pathname ? controlsRefs[pathname] : null}

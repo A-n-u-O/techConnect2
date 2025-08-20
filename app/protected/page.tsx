@@ -15,12 +15,11 @@ export default async function ProtectedPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const { data: entries } = await supabase
+  const { data: entries, error: entriesError } = await supabase
     .from("entries")
     .select("*")
     .eq("user_id", user?.id)
     .order("created_at", { ascending: false });
-  
 
   return (
     <div className="flex-1 w-full">
@@ -32,6 +31,7 @@ export default async function ProtectedPage() {
           <Link href="/new-entry">Add new entry</Link>
         </Button>
         <br />
+
         <div className="flex flex-row gap-4 overflow-x-auto">
           {!entries || entries.length === 0 ? (
             <span>You haven&apos;t made any entries!</span>
