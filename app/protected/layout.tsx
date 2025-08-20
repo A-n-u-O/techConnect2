@@ -2,6 +2,7 @@ import { EnvVarWarning } from "@/components/env-var-warning";
 import { AuthButton } from "@/components/auth-button";
 import { hasEnvVars } from "@/lib/utils";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default function ProtectedLayout({
   children,
@@ -16,6 +17,9 @@ export default function ProtectedLayout({
             <div className="flex gap-5 items-center font-semibold">
               <Link href={"/"} className="text-md">
                 TechConnect | User Dashboard
+              </Link>
+              <Link href={"/profile"}>
+                <Button> View Profile</Button>
               </Link>
             </div>
             {!hasEnvVars ? <EnvVarWarning /> : <AuthButton />}
