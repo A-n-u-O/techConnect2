@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { entries as EntryCards } from "@/components/entry-cards";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { Divider } from "@mantine/core";
+
 
 export default async function ProtectedPage() {
   const supabase = await createClient();
@@ -20,14 +22,12 @@ export default async function ProtectedPage() {
     .select("*")
     .eq("user_id", user?.id)
     .order("created_at", { ascending: false });
-  
 
   return (
     <div className="flex-1 w-full">
-
       <div className="flex flex-col gap-2 items-start">
         <h2 className="text-3xl font-bold">My Entries</h2>
-        <br />
+        <Divider my="md" />
         <Button>
           <Link href="/new-entry">Add new entry</Link>
         </Button>
