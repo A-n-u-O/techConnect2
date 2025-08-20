@@ -23,6 +23,7 @@ export default async function ProtectedPage() {
 
   return (
     <div className="flex-1 w-full">
+
       <div className="flex flex-col gap-2 items-start">
         <h2 className="text-3xl font-bold">My Entries</h2>
         <br />
