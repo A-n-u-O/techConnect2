@@ -30,6 +30,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.className} antialiased`}>
         <MantineProvider >
+
           <ThemeProvider
             attribute="class"
             defaultTheme="system"

@@ -31,11 +31,14 @@ export default async function ProtectedPage() {
           <Link href="/new-entry">Add new entry</Link>
         </Button>
         <br />
-        {!entries || entries.length === 0 ? (
-          <span>You haven&apos;t made any entries!</span>
-        ) : (
-          <EntryCards entries={entries} />
-        )}
+
+        <div className="flex flex-row gap-4 overflow-x-auto">
+          {!entries || entries.length === 0 ? (
+            <span>You haven&apos;t made any entries!</span>
+          ) : (
+            <EntryCards entries={entries} />
+          )}
+        </div>
       </div>
     </div>
   );

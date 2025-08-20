@@ -57,6 +57,7 @@ export default function ProfileNav() {
                 <Link href="/profile">Your Account</Link>
               </Tabs.Tab>
 
+
               <FloatingIndicator
                 target={pathname ? controlsRefs[pathname] : null}
                 parent={rootRef}
