@@ -28,7 +28,7 @@ export function entries({ entries }: EntryCardsProps) {
             <p className="text-sm">{entry.description}</p>
           </CardContent>
           <CardFooter>
-            <Link href={`entry-cards/read-more/${entry.id}`}>
+            <Link href={`/new-entry/read-more/${entry.id}`}>
               {" "}
               <Button>Read More</Button>
             </Link>
