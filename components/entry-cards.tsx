@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Card,
   CardHeader,
@@ -6,8 +8,9 @@ import {
   CardContent,
   CardFooter,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Entry } from "./interfaces";
+import Link from "next/link";
+import { Button } from "./ui/button";
 interface EntryCardsProps {
   entries: Entry[];
 }
@@ -25,7 +28,10 @@ export function entries({ entries }: EntryCardsProps) {
             <p className="text-sm">{entry.description}</p>
           </CardContent>
           <CardFooter>
-            <Button>Read More</Button>
+            <Link href={`entry-cards/read-more/${entry.id}`}>
+              {" "}
+              <Button>Read More</Button>
+            </Link>
           </CardFooter>
         </Card>
       ))}
