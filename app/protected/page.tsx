@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import  {entries as EntryCards} from "@/components/entry-cards";
+import { entries as EntryCards } from "@/components/entry-cards";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 
@@ -12,8 +12,10 @@ export default async function ProtectedPage() {
     redirect("/auth/login");
   }
 
-  const { data: { user } } = await supabase.auth.getUser();
-  const { data: entries, error: entriesError } = await supabase
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { data: entries } = await supabase
     .from("entries")
     .select("*")
     .eq("user_id", user?.id)
@@ -22,6 +24,7 @@ export default async function ProtectedPage() {
 
   return (
     <div className="flex-1 w-full">
+
       <div className="flex flex-col gap-2 items-start">
         <h2 className="text-3xl font-bold">My Entries</h2>
         <br />
@@ -29,11 +32,13 @@ export default async function ProtectedPage() {
           <Link href="/new-entry">Add new entry</Link>
         </Button>
         <br />
-        {(!entries || entries.length === 0) ? (
-          <span>You haven&apos;t made any entries!</span>
-        ) : (
-          <EntryCards entries={entries} />
-        )}
+        <div className="flex flex-row gap-4 overflow-x-auto">
+          {!entries || entries.length === 0 ? (
+            <span>You haven&apos;t made any entries!</span>
+          ) : (
+            <EntryCards entries={entries} />
+          )}
+        </div>
       </div>
     </div>
   );
