@@ -15,6 +15,8 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { ArrowLeft } from "lucide-react";
+
 
 export function SignUpForm({
   className,
@@ -60,6 +62,10 @@ export function SignUpForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
+          <Link href="/" className="flex mb-5 text-sm items-center">
+            <ArrowLeft />
+            Back to homepage
+          </Link>
           <CardTitle className="text-2xl">Sign up</CardTitle>
           <CardDescription>Create a new account</CardDescription>
         </CardHeader>

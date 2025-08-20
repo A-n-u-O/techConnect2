@@ -1,8 +1,15 @@
 import { redirect } from "next/navigation";
-
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { InfoIcon } from "lucide-react";
-import { FetchDataSteps } from "@/components/tutorial/fetch-data-steps";
 
 export default async function ProtectedPage() {
   const supabase = await createClient();
@@ -13,23 +20,37 @@ export default async function ProtectedPage() {
   }
 
   return (
-    <div className="flex-1 w-full flex flex-col gap-12">
-      <div className="w-full">
-        <div className="bg-accent text-sm p-3 px-5 rounded-md text-foreground flex gap-3 items-center">
-          <InfoIcon size="16" strokeWidth={2} />
-          This is a protected page that you can only see as an authenticated
-          user
-        </div>
-      </div>
+    <div className="flex-1 w-full">
       <div className="flex flex-col gap-2 items-start">
-        <h2 className="font-bold text-2xl mb-4">Your user details</h2>
-        <pre className="text-xs font-mono p-3 rounded border max-h-32 overflow-auto">
-          {JSON.stringify(data.claims, null, 2)}
-        </pre>
-      </div>
-      <div>
-        <h2 className="font-bold text-2xl mb-4">Next steps</h2>
-        <FetchDataSteps />
+        <h2 className="text-3xl font-bold">My Entries</h2>
+        <br />
+        <Button>
+          <Link href="/new-entry">Add new entry</Link>
+        </Button>
+        <br />
+        {1 < 2 ? ( //Change it to less than to see the card of entries
+          <span>You haven&apos;t made any entries!</span>
+        ) : (
+          <div>
+            <Card className="w-[350px]">
+              <CardHeader>
+                <CardTitle>Project Overview</CardTitle>
+                <CardDescription>
+                  Details about your latest project
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm">
+                  This project is 75% complete. You can track progress and make
+                  updates below.
+                </p>
+              </CardContent>
+              <CardFooter>
+                <Button>Read More</Button>
+              </CardFooter>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );
