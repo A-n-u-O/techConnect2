@@ -1,3 +1,4 @@
+"use client";
 import { Entry } from "@/components/interfaces";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -80,7 +81,9 @@ export default function ReadMorePage() {
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-4xl">
-      <Link href="/protected" className="inline-flex items-center mb-6 text-sm text-blue-600 hover:underline">
+      <Link
+        href="/protected"
+        className="inline-flex items-center mb-6 text-sm text-blue-600 hover:underline">
         <ArrowLeft className="h-4 w-4 mr-2" />
         Back to all entries
       </Link>
@@ -95,7 +98,7 @@ export default function ReadMorePage() {
               </span>
             </div>
           </div>
-          
+
           <div className="flex flex-wrap gap-4 mt-4 text-sm text-gray-500">
             <div className="flex items-center">
               <Calendar className="h-4 w-4 mr-1" />
@@ -113,14 +116,15 @@ export default function ReadMorePage() {
             </div>
           </div>
         </CardHeader>
-        
+
         <CardContent>
           <div className="prose max-w-none">
-            <p className="text-gray-700 whitespace-pre-line">{entry.description}</p>
+            <p className="text-gray-700 whitespace-pre-line">
+              {entry.description}
+            </p>
           </div>
         </CardContent>
       </Card>
     </div>
-  
-  )
+  );
 }
