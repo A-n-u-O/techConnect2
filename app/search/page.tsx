@@ -1,4 +1,4 @@
-import ProfileNav from "@/components/profiie-nav";
+import ProfileNav from "@/components/profile-nav";
 
 export default function Page() {
   return (
