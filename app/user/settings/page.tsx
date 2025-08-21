@@ -10,7 +10,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
-export default function ProfilePage() {
+export default function SettingsPage() {
   const supabase = createClient();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [user, setUser] = useState<any>(null);
@@ -114,7 +114,7 @@ export default function ProfilePage() {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <p>Loading profile...</p>
+          <p>Loading...</p>
         </div>
       </div>
     );
@@ -122,9 +122,9 @@ export default function ProfilePage() {
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-4xl">
-        {/* navigation header  */}
-        <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Your Profile</h1>
+      {/* navigation header  */}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Settings</h1>
         <div className="w-24"></div> {/* Spacer for balanced layout */}
       </div>
       {/* Success/Error Messages */}
@@ -141,18 +141,33 @@ export default function ProfilePage() {
 
       <Card className="w-full">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-2xl">Profile Details</CardTitle>
-          <Link href="/settings/edit-profile">
-            <Button>
-              <Edit className="h-4 w-4 mr-2" />
-              {profile ? "Edit Profile" : "Create Profile"}
-            </Button>
-          </Link>
-        </CardHeader>
-        <CardContent>
           {profile ? (
-            <div className="space-y-6">
-              <div className="flex flex-col items-center">
+            <>
+              <CardTitle className="text-2xl">
+                {profile.first_name} {profile.last_name}
+              </CardTitle>
+              <Link href="/settings/edit-profile">
+                <Button>
+                  <Edit className="h-4 w-4 mr-2" />
+                  {profile ? "Edit Profile" : "Create Profile"}
+                </Button>
+              </Link>
+            </>
+          ) : (
+            <p className="text-gray-600 mb-4">
+              {user?.email && `Logged in as: ${user.email}`}
+            </p>
+          )}
+        </CardHeader>
+
+        <CardContent>
+          <div className="space-y-6">
+            <Link href="/profile/edit-profile">
+              <Button>Edit Profile</Button>
+            </Link>
+          </div>
+
+          {/* <div className="flex flex-col items-center">
                 {profile.profile_picture ? (
                   <Image
                     src={profile.profile_picture}
@@ -167,7 +182,7 @@ export default function ProfilePage() {
                   </div>
                 )}
                 <h2 className="text-2xl font-bold">
-                  {profile.first_name} {profile.last_name}
+                  
                 </h2>
                 <p className="text-gray-600">{profile.email}</p>
 
@@ -188,24 +203,14 @@ export default function ProfilePage() {
                 </div>
               )}
             </div>
-          ) : (
+         
             <div className="text-center py-8">
               <User className="h-16 w-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-xl font-semibold mb-2">No Profile Yet</h3>
-              <p className="text-gray-600 mb-4">
-                {user?.email && `Logged in as: ${user.email}`}
-              </p>
-              {joinedDate && (
-                <p className="text-sm text-muted-foreground mb-4 flex items-center justify-center">
-                  <Calendar className="h-4 w-4 mr-1" />
-                  Joined {joinedDate}
-                </p>
-              )}
-              <Link href="/profile/edit-profile">
-                <Button>Create Profile</Button>
-              </Link>
+              
+              
             </div>
-          )}
+          )} */}
         </CardContent>
       </Card>
     </div>
