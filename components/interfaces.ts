@@ -16,3 +16,9 @@ export interface Profile {
   email: string;
   profile_picture: string;
 }
+
+export interface ProfilePictureUploadProps {
+  onImageChange: (file: File | null) => void;
+  currentImageUrl?: string;
+  className?: string;
+}
