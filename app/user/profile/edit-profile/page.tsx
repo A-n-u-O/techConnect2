@@ -2,16 +2,38 @@
 
 import { Profile } from "@/components/interfaces";
 import { createClient } from "@/lib/supabase/client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { User, Camera, ArrowLeft } from "lucide-react";
+import { User, Camera, ArrowLeft, X } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
+import ReactCrop, { Crop, PixelCrop, centerCrop, makeAspectCrop } from "react-image-crop";
+import "react-image-crop/dist/ReactCrop.css";
+import { cn } from "@/lib/utils";
+
+function centerAspectCrop(
+  mediaWidth: number,
+  mediaHeight: number,
+  aspect: number,
+) {
+  return centerCrop(
+    makeAspectCrop(
+      {
+        unit: '%',
+        width: 90,
+      },
+      aspect,
+      mediaWidth,
+      mediaHeight,
+    ),
+    mediaWidth,
+    mediaHeight,
+  );
+}
 
 export default function EditProfilePage() {
   const supabase = createClient();
@@ -27,7 +49,14 @@ export default function EditProfilePage() {
   const [bio, setBio] = useState("");
   const [email, setEmail] = useState("");
   const [profilePicture, setProfilePicture] = useState<File | null>(null);
-  const [profilePictureUrl, setProfilePictureUrl] = useState("");
+  const [currentProfilePictureUrl, setCurrentProfilePictureUrl] = useState("");
+
+  // Crop state
+  const [crop, setCrop] = useState<Crop>();
+  const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
+  const [imgSrc, setImgSrc] = useState<string>("");
+  const imgRef = useRef<HTMLImageElement>(null);
+  const [showCropModal, setShowCropModal] = useState(false);
 
   useEffect(() => {
     loadUserAndProfile();
@@ -71,7 +100,7 @@ export default function EditProfilePage() {
         setFirstName(data.first_name || "");
         setLastName(data.last_name || "");
         setBio(data.bio || "");
-        setProfilePictureUrl(data.avatar_url || data.profile_picture || "");
+        setCurrentProfilePictureUrl(data.avatar_url || data.profile_picture || "");
       }
     } catch (err) {
       console.error("Error loading profile:", err);
@@ -80,22 +109,92 @@ export default function EditProfilePage() {
     }
   }
 
+  function onSelectFile(e: React.ChangeEvent<HTMLInputElement>) {
+    if (e.target.files && e.target.files.length > 0) {
+      setCrop(undefined);
+      const reader = new FileReader();
+      reader.addEventListener('load', () =>
+        setImgSrc(reader.result?.toString() || ''),
+      );
+      reader.readAsDataURL(e.target.files[0]);
+      setShowCropModal(true);
+    }
+  }
+
+  function onImageLoad(e: React.SyntheticEvent<HTMLImageElement>) {
+    const { width, height } = e.currentTarget;
+    setCrop(centerAspectCrop(width, height, 1));
+  }
+
+  async function getCroppedImg(): Promise<Blob | null> {
+    if (!imgRef.current || !completedCrop) return null;
+
+    const image = imgRef.current;
+    const canvas = document.createElement('canvas');
+    const scaleX = image.naturalWidth / image.width;
+    const scaleY = image.naturalHeight / image.height;
+    const ctx = canvas.getContext('2d');
+
+    if (!ctx) return null;
+
+    canvas.width = completedCrop.width;
+    canvas.height = completedCrop.height;
+
+    ctx.drawImage(
+      image,
+      completedCrop.x * scaleX,
+      completedCrop.y * scaleY,
+      completedCrop.width * scaleX,
+      completedCrop.height * scaleY,
+      0,
+      0,
+      completedCrop.width,
+      completedCrop.height,
+    );
+
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => {
+        resolve(blob);
+      }, 'image/jpeg', 0.9);
+    });
+  }
+
+  async function handleCropComplete() {
+    const croppedImageBlob = await getCroppedImg();
+    if (croppedImageBlob) {
+      const file = new File([croppedImageBlob], "profile-picture.jpg", {
+        type: "image/jpeg",
+      });
+      
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(croppedImageBlob);
+      setCurrentProfilePictureUrl(previewUrl);
+      setProfilePicture(file);
+      setShowCropModal(false);
+    }
+  }
+
+  function removeProfilePicture() {
+    setCurrentProfilePictureUrl("");
+    setProfilePicture(null);
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
 
     try {
       if (!user) {
-        router.push("/profile?error=no_user");
+        router.push("/user/profile?error=no_user");
         return;
       }
 
-      let avatarUrl = profilePictureUrl;
+      let avatarUrl = currentProfilePictureUrl;
 
       // Upload new profile picture if selected
       if (profilePicture) {
         try {
-          const fileExt = profilePicture.name.split(".").pop();
+          const fileExt = "jpg"; // Always jpg since we convert to jpeg
           const fileName = `${user.id}-${Math.random()}.${fileExt}`;
           const { error: uploadError } = await supabase.storage
             .from("avatars")
@@ -103,7 +202,6 @@ export default function EditProfilePage() {
 
           if (uploadError) {
             console.error("Error uploading image:", uploadError);
-            // Continue without the image rather than failing completely
           } else {
             const { data: urlData } = supabase.storage
               .from("avatars")
@@ -128,9 +226,6 @@ export default function EditProfilePage() {
 
       if (error) {
         console.error("Error saving profile:", error);
-        console.error("Error details:", error.details);
-        console.error("Error message:", error.message);
-        console.error("Error code:", error.code);
         router.push("/user/profile?error=save_failed");
       } else {
         console.log("Profile saved successfully");
@@ -142,21 +237,6 @@ export default function EditProfilePage() {
     } finally {
       setSaving(false);
     }
-  }
-
-  async function handleProfilePictureChange(
-    e: React.ChangeEvent<HTMLInputElement>
-  ) {
-    if (!e.target.files || e.target.files.length === 0) {
-      return;
-    }
-
-    const file = e.target.files[0];
-    setProfilePicture(file);
-
-    // Create a preview URL
-    const previewUrl = URL.createObjectURL(file);
-    setProfilePictureUrl(previewUrl);
   }
 
   if (loading) {
@@ -175,7 +255,8 @@ export default function EditProfilePage() {
         <CardHeader>
           <Button
             onClick={() => router.back()}
-            className="flex items-center text-sm text-blue-600 hover:underline mb-4 w-32">
+            variant="outline"
+            className="flex items-center w-32">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back
           </Button>
@@ -187,14 +268,22 @@ export default function EditProfilePage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="flex flex-col items-center mb-6">
               <div className="relative mb-4">
-                {profilePictureUrl ? (
-                  <Image
-                    src={profilePictureUrl}
-                    alt="Profile preview"
-                    width={120}
-                    height={120}
-                    className="rounded-full object-cover border-2 border-gray-300"
-                  />
+                {currentProfilePictureUrl ? (
+                  <div className="relative">
+                    <Image
+                      src={currentProfilePictureUrl}
+                      alt="Profile preview"
+                      width={120}
+                      height={120}
+                      className="rounded-full object-cover border-2 border-gray-300 w-32 h-32"
+                    />
+                    <button
+                      onClick={removeProfilePicture}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
                 ) : (
                   <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center">
                     <User size={64} className="text-gray-400" />
@@ -202,21 +291,67 @@ export default function EditProfilePage() {
                 )}
                 <Label
                   htmlFor="profile-picture"
-                  className="absolute bottom-0 right-0 bg-white rounded-full p-2 shadow-md cursor-pointer">
+                  className={cn(
+                    "absolute bottom-0 right-0 bg-white rounded-full p-2 shadow-md cursor-pointer hover:bg-gray-100",
+                    currentProfilePictureUrl && "bottom-2 right-2"
+                  )}>
                   <Camera className="h-5 w-5" />
                   <Input
                     id="profile-picture"
                     type="file"
                     accept="image/*"
-                    onChange={handleProfilePictureChange}
+                    onChange={onSelectFile}
                     className="hidden"
                   />
                 </Label>
               </div>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 text-center">
                 Click the camera icon to upload a profile picture
               </p>
             </div>
+
+            {/* Crop Modal */}
+            {showCropModal && (
+              <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+                <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+                  <h3 className="text-lg font-semibold mb-4">Crop your profile picture</h3>
+                  
+                  {imgSrc && (
+                    <ReactCrop
+                      crop={crop}
+                      onChange={(_, percentCrop) => setCrop(percentCrop)}
+                      onComplete={(c) => setCompletedCrop(c)}
+                      aspect={1}
+                      circularCrop
+                    >
+                      <img
+                        ref={imgRef}
+                        alt="Crop me"
+                        src={imgSrc}
+                        style={{ maxHeight: "60vh", maxWidth: "100%" }}
+                        onLoad={onImageLoad}
+                      />
+                    </ReactCrop>
+                  )}
+
+                  <div className="flex gap-3 mt-4">
+                    <Button
+                      onClick={handleCropComplete}
+                      className="flex-1"
+                    >
+                      Apply Crop
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowCropModal(false)}
+                      className="flex-1"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="grid gap-2">
@@ -269,11 +404,13 @@ export default function EditProfilePage() {
               <Button type="submit" disabled={saving}>
                 {saving ? "Saving..." : "Save Profile"}
               </Button>
-              <Link href="/profile">
-                <Button type="button" variant="outline">
-                  Cancel
-                </Button>
-              </Link>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => router.back()}
+              >
+                Cancel
+              </Button>
             </div>
           </form>
         </CardContent>
