@@ -146,12 +146,6 @@ export default function SettingsPage() {
               <CardTitle className="text-2xl">
                 {profile.first_name} {profile.last_name}
               </CardTitle>
-              <Link href="/settings/edit-profile">
-                <Button>
-                  <Edit className="h-4 w-4 mr-2" />
-                  {profile ? "Edit Profile" : "Create Profile"}
-                </Button>
-              </Link>
             </>
           ) : (
             <p className="text-gray-600 mb-4">
@@ -162,9 +156,12 @@ export default function SettingsPage() {
 
         <CardContent>
           <div className="space-y-6">
-            <Link href="/profile/edit-profile">
-              <Button>Edit Profile</Button>
-            </Link>
+            <Link href="/user/profile/edit-profile">
+                <Button>
+                  <Edit className="h-4 w-4 mr-2" />
+                  {profile ? "Edit Profile" : "Create Profile"}
+                </Button>
+              </Link>
           </div>
 
           {/* <div className="flex flex-col items-center">

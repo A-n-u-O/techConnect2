@@ -20,7 +20,7 @@ export default function EditProfilePage() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  
+
   // Form state
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -35,7 +35,10 @@ export default function EditProfilePage() {
 
   async function loadUserAndProfile() {
     try {
-      const { data: { user: authUser }, error: userError } = await supabase.auth.getUser();
+      const {
+        data: { user: authUser },
+        error: userError,
+      } = await supabase.auth.getUser();
 
       if (userError || !authUser) {
         console.error("No authenticated user", userError);
@@ -83,7 +86,7 @@ export default function EditProfilePage() {
 
     try {
       if (!user) {
-        router.push('/profile?error=no_user');
+        router.push("/profile?error=no_user");
         return;
       }
 
@@ -92,65 +95,65 @@ export default function EditProfilePage() {
       // Upload new profile picture if selected
       if (profilePicture) {
         try {
-          const fileExt = profilePicture.name.split('.').pop();
+          const fileExt = profilePicture.name.split(".").pop();
           const fileName = `${user.id}-${Math.random()}.${fileExt}`;
           const { error: uploadError } = await supabase.storage
-            .from('avatars')
+            .from("avatars")
             .upload(fileName, profilePicture);
 
           if (uploadError) {
-            console.error('Error uploading image:', uploadError);
+            console.error("Error uploading image:", uploadError);
             // Continue without the image rather than failing completely
           } else {
             const { data: urlData } = supabase.storage
-              .from('avatars')
+              .from("avatars")
               .getPublicUrl(fileName);
             avatarUrl = urlData.publicUrl;
           }
         } catch (uploadError) {
-          console.error('Error in image upload:', uploadError);
+          console.error("Error in image upload:", uploadError);
         }
       }
 
       // Update profile in database using upsert
-      const { error } = await supabase
-        .from('profiles')
-        .upsert({
-          id: user.id,
-          first_name: firstName,
-          last_name: lastName,
-          bio: bio,
-          email: user.email,
-          avatar_url: avatarUrl,
-          updated_at: new Date().toISOString(),
-        });
+      const { error } = await supabase.from("profiles").upsert({
+        id: user.id,
+        first_name: firstName,
+        last_name: lastName,
+        bio: bio,
+        email: user.email,
+        avatar_url: avatarUrl,
+        updated_at: new Date().toISOString(),
+      });
 
       if (error) {
-        console.error('Error saving profile:', error);
-        console.error('Error details:', error.details);
-        console.error('Error message:', error.message);
-        console.error('Error code:', error.code);
-        router.push('/profile?error=save_failed');
+        console.error("Error saving profile:", error);
+        console.error("Error details:", error.details);
+        console.error("Error message:", error.message);
+        console.error("Error code:", error.code);
+        router.push("/user/profile?error=save_failed");
       } else {
-        console.log('Profile saved successfully');
-        router.push('/profile?success=true');
+        console.log("Profile saved successfully");
+        router.push("/user/profile?success=true");
       }
     } catch (err) {
-      console.error('Unexpected error in handleSubmit:', err);
-      router.push('/profile?error=unexpected_error');
+      console.error("Unexpected error in handleSubmit:", err);
+      router.push("/user/profile?error=unexpected_error");
     } finally {
       setSaving(false);
     }
   }
 
-  async function handleProfilePictureChange(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleProfilePictureChange(
+    e: React.ChangeEvent<HTMLInputElement>
+  ) {
     if (!e.target.files || e.target.files.length === 0) {
       return;
     }
-    
+
     const file = e.target.files[0];
     setProfilePicture(file);
-    
+
     // Create a preview URL
     const previewUrl = URL.createObjectURL(file);
     setProfilePictureUrl(previewUrl);
@@ -170,10 +173,12 @@ export default function EditProfilePage() {
     <div className="container mx-auto py-8 px-4 max-w-4xl">
       <Card className="w-full">
         <CardHeader>
-          <Link href="/profile" className="flex items-center text-sm text-blue-600 hover:underline mb-4">
+          <Button
+            onClick={() => router.back()}
+            className="flex items-center text-sm text-blue-600 hover:underline mb-4 w-32">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Profile
-          </Link>
+            Back
+          </Button>
           <CardTitle className="text-2xl">
             {profile ? "Edit Profile" : "Create Profile"}
           </CardTitle>
@@ -195,7 +200,9 @@ export default function EditProfilePage() {
                     <User size={64} className="text-gray-400" />
                   </div>
                 )}
-                <Label htmlFor="profile-picture" className="absolute bottom-0 right-0 bg-white rounded-full p-2 shadow-md cursor-pointer">
+                <Label
+                  htmlFor="profile-picture"
+                  className="absolute bottom-0 right-0 bg-white rounded-full p-2 shadow-md cursor-pointer">
                   <Camera className="h-5 w-5" />
                   <Input
                     id="profile-picture"
@@ -206,7 +213,9 @@ export default function EditProfilePage() {
                   />
                 </Label>
               </div>
-              <p className="text-sm text-gray-500">Click the camera icon to upload a profile picture</p>
+              <p className="text-sm text-gray-500">
+                Click the camera icon to upload a profile picture
+              </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

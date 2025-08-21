@@ -142,7 +142,7 @@ export default function ProfilePage() {
       <Card className="w-full">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-2xl">Profile Details</CardTitle>
-          <Link href="/settings/edit-profile">
+          <Link href="profile/edit-profile">
             <Button>
               <Edit className="h-4 w-4 mr-2" />
               {profile ? "Edit Profile" : "Create Profile"}
