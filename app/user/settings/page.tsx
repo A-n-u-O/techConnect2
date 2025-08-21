@@ -5,10 +5,10 @@ import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { User, Calendar, Edit, Home } from "lucide-react";
+import { User, Calendar, Edit } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { redirect, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 export default function ProfilePage() {
   const supabase = createClient();
@@ -124,12 +124,6 @@ export default function ProfilePage() {
     <div className="container mx-auto py-8 px-4 max-w-4xl">
         {/* navigation header  */}
         <div className="flex justify-between items-center mb-6">
-        <Link href="/home">
-          <Button variant="outline">
-            <Home className="h-4 w-4 mr-2" />
-            Back to Feed
-          </Button>
-        </Link>
         <h1 className="text-2xl font-bold">Your Profile</h1>
         <div className="w-24"></div> {/* Spacer for balanced layout */}
       </div>
@@ -147,8 +141,8 @@ export default function ProfilePage() {
 
       <Card className="w-full">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-2xl">Your Profile</CardTitle>
-          <Link href="/profile/edit-profile">
+          <CardTitle className="text-2xl">Profile Details</CardTitle>
+          <Link href="/settings/edit-profile">
             <Button>
               <Edit className="h-4 w-4 mr-2" />
               {profile ? "Edit Profile" : "Create Profile"}
