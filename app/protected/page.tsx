@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { entries as EntryCards } from "@/components/entry-cards";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { Divider } from "@mantine/core";
 
 export default async function ProtectedPage() {
   const supabase = await createClient();
@@ -15,18 +16,26 @@ export default async function ProtectedPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const { data: entries, error: entriesError } = await supabase
+  const { data: entries } = await supabase
     .from("entries")
     .select("*")
     .eq("user_id", user?.id)
     .order("created_at", { ascending: false });
 
+  const { data: profileData } = await supabase
+    .from("profiles")
+    .select("first_name")
+    .eq("id", user?.id)
+    .single();
+
   return (
     <div className="flex-1 w-full">
-
       <div className="flex flex-col gap-2 items-start">
-        <h2 className="text-3xl font-bold">My Entries</h2>
-        <br />
+        <h1 className="text-3xl font-bold">
+          Welcome back, {profileData?.first_name ?? "Developer"} 👋
+        </h1>
+        <h2 className="text-2xl font-bold">My Entries</h2>
+        <Divider my="md" />
         <Button>
           <Link href="/new-entry">Add new entry</Link>
         </Button>

@@ -6,6 +6,16 @@ import { useState } from "react";
 import { FloatingIndicator, Tabs } from "@mantine/core";
 import classes from "./Demo.module.css";
 import { usePathname } from "next/navigation";
+import "@mantine/core/styles.css";
+import "@mantine/spotlight/styles.css";
+import { Button } from "@mantine/core";
+import {
+  Spotlight,
+  SpotlightActionData,
+  SpotlightActionGroupData,
+  spotlight,
+} from "@mantine/spotlight";
+import { Search } from "lucide-react";
 
 export default function ProfileNav() {
   const [rootRef, setRootRef] = useState<HTMLDivElement | null>(null);
@@ -17,6 +27,9 @@ export default function ProfileNav() {
     controlsRefs[val] = node;
     setControlsRefs(controlsRefs);
   };
+
+  const actions: (SpotlightActionGroupData | SpotlightActionData)[] = [];
+
   return (
     <nav className="w-full flex justify-center border-b border-b-foreground/10 h-16">
       <div className="w-full max-w-5xl flex justify-between items-center p-3 px-5 text-sm">
@@ -25,6 +38,24 @@ export default function ProfileNav() {
             TechConnect {pathname == "/protected" && " | User Dashboard"}
           </Link>
         </div>
+        {pathname == "/protected" ? (
+          ""
+        ) : (
+          <Button onClick={spotlight.open} className="flex justify-center">
+            {" "}
+            <Search size={15} />
+            Search
+          </Button>
+        )}
+        <Spotlight
+          actions={actions}
+          nothingFound="Nothing found..."
+          highlightQuery
+          searchProps={{
+            leftSection: <Search size={20} />,
+            placeholder: "Search...",
+          }}
+        />
         <div>
           <Tabs variant="none" value={pathname} onChange={() => {}}>
             <Tabs.List ref={setRootRef} className={classes.list}>
@@ -47,16 +78,15 @@ export default function ProfileNav() {
                 ref={setControlRef("/protected")}
                 className={classes.tab}
               >
-                <Link href="/protected">Profiles</Link>
+                <Link href="/protected">Profile</Link>
               </Tabs.Tab>
               <Tabs.Tab
-                value="/protected"
-                ref={setControlRef("/protected")}
+                value="/profile"
+                ref={setControlRef("/profile")}
                 className={classes.tab}
               >
-                <Link href="/profile">Your Account</Link>
+                <Link href="/profile">Account Settings</Link>
               </Tabs.Tab>
-
 
               <FloatingIndicator
                 target={pathname ? controlsRefs[pathname] : null}

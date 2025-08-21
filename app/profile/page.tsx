@@ -124,7 +124,7 @@ export default function ProfilePage() {
     <div className="container mx-auto py-8 px-4 max-w-4xl">
         {/* navigation header  */}
         <div className="flex justify-between items-center mb-6">
-        <Link href="/protected">
+        <Link href="/home">
           <Button variant="outline">
             <Home className="h-4 w-4 mr-2" />
             Back to Feed
