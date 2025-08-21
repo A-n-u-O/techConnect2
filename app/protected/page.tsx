@@ -5,7 +5,6 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Divider } from "@mantine/core";
 
-
 export default async function ProtectedPage() {
   const supabase = await createClient();
 
@@ -23,15 +22,25 @@ export default async function ProtectedPage() {
     .eq("user_id", user?.id)
     .order("created_at", { ascending: false });
 
+  const { data: profileData } = await supabase
+    .from("profiles")
+    .select("first_name")
+    .eq("id", user?.id)
+    .single();
+
   return (
     <div className="flex-1 w-full">
       <div className="flex flex-col gap-2 items-start">
-        <h2 className="text-3xl font-bold">My Entries</h2>
+        <h1 className="text-3xl font-bold">
+          Welcome back, {profileData?.first_name ?? "Developer"} 👋
+        </h1>
+        <h2 className="text-2xl font-bold">My Entries</h2>
         <Divider my="md" />
         <Button>
           <Link href="/new-entry">Add new entry</Link>
         </Button>
         <br />
+
         <div className="flex flex-row gap-4 overflow-x-auto">
           {!entries || entries.length === 0 ? (
             <span>You haven&apos;t made any entries!</span>

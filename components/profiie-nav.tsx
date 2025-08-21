@@ -78,7 +78,14 @@ export default function ProfileNav() {
                 ref={setControlRef("/protected")}
                 className={classes.tab}
               >
-                <Link href="/protected">Profiles</Link>
+                <Link href="/protected">Profile</Link>
+              </Tabs.Tab>
+              <Tabs.Tab
+                value="/profile"
+                ref={setControlRef("/profile")}
+                className={classes.tab}
+              >
+                <Link href="/profile">Account Settings</Link>
               </Tabs.Tab>
 
               <FloatingIndicator
