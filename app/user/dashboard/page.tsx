@@ -31,7 +31,7 @@ export default async function ProtectedPage() {
         <h2 className="text-2xl font-bold">My Entries</h2>
         <Divider my="md" />
         <Button>
-          <Link href="/new-entry">Add new entry</Link>
+          <Link href="/user/new-entry">Add new entry</Link>
         </Button>
         <br />
 

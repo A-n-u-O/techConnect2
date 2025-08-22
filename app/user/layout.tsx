@@ -1,4 +1,4 @@
-import ProfileNav from "@/components/profile-nav";
+import ProfileNav from "@/components/profiie-nav";
 import Sidebar from "@/components/sidebar";
 
 export default function ProtectedLayout({

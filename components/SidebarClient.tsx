@@ -28,7 +28,7 @@ export default function SidebarClient({ firstName }: { firstName: string }) {
   };
 
   return (
-    <div className="h-screen w-64 bg-white text-gray-900 flex flex-col border-r border-gray-200 shadow-sm">
+    <div className="static h-screen w-65 bg-white text-gray-900 flex flex-col border-r border-gray-200 shadow-sm">
       {/* Logo/Brand Section */}
       <div className="p-6 border-b border-gray-200">
         <h1 className="text-xl font-bold text-gray-800">

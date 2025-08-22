@@ -4,7 +4,7 @@ import { LogoutButton } from "@/components/logout-button";
 import Link from "next/link";
 import { useState } from "react";
 import { FloatingIndicator, Tabs } from "@mantine/core";
-import classes from "./Demo.module.css";
+import classes from "@/components/Demo.module.css";
 import { usePathname } from "next/navigation";
 import "@mantine/core/styles.css";
 import "@mantine/spotlight/styles.css";
@@ -20,12 +20,11 @@ export default function ProfileNav() {
     setControlsRefs(controlsRefs);
   };
 
-
   return (
     <nav className="w-full flex justify-center border-b border-b-foreground/10 h-16">
       <div className="w-full max-w-5xl flex justify-between items-center p-3 px-5 text-sm">
         <div className="flex items-center font-semibold">
-          <Link href={"/"} className="text-md">
+          <Link href={"/"} className="text-base">
             TechConnect
           </Link>
         </div>
