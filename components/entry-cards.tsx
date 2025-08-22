@@ -17,9 +17,9 @@ interface EntryCardsProps {
 
 export function entries({ entries }: EntryCardsProps) {
   return (
-    <div className="grid gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {entries.map((entry) => (
-        <Card key={entry.id} className="w-[350px]">
+        <Card key={entry.id} className="w-full">
           <CardHeader>
             <CardTitle>{entry.title}</CardTitle>
             <CardDescription>{entry.category}</CardDescription>
@@ -29,7 +29,6 @@ export function entries({ entries }: EntryCardsProps) {
           </CardContent>
           <CardFooter>
             <Link href={`/new-entry/read-more/${entry.id}`}>
-              {" "}
               <Button>Read More</Button>
             </Link>
           </CardFooter>

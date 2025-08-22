@@ -8,9 +8,11 @@ import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
 
 export default function Page() {
   const supabase = createClient();
+  const router = useRouter();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
@@ -39,6 +41,7 @@ export default function Page() {
       setCategory("");
       setDescription("");
       console.log("Successfully added entry");
+      router.push("/user/dashboard");
     }
     setIsLoading(false);
   }
@@ -76,21 +79,25 @@ export default function Page() {
                     required
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
-                    className="border rounded px-3 py-2">
+                    className="border rounded px-3 py-2"
+                  >
                     <option value="">Select category</option>
                     <option
                       value="Front-end Web Development"
-                      className="text-xl">
+                      className="text-xl"
+                    >
                       Front-end Web Development
                     </option>
                     <option
                       value="Back-end Web Development"
-                      className="text-xl">
+                      className="text-xl"
+                    >
                       Back-end Web Development
                     </option>
                     <option
                       value="Full-Stack Web Development"
-                      className="text-xl">
+                      className="text-xl"
+                    >
                       Full-Stack Web Development
                     </option>
                     <option value="Mobile Development" className="text-xl">
@@ -109,30 +116,33 @@ export default function Page() {
                       Product Management
                     </option>
                     <option
-                      value="Data Science/Machine Learning"
-                      className="text-xl">
+                      value="Data Science / Machine Learning"
+                      className="text-xl"
+                    >
                       Data Science / Machine Learning
                     </option>
                     <option value="Artificial Intelligence" className="text-xl">
                       Artificial Intelligence
                     </option>
-                    <option value="Cloud Computing/DevOps" className="text-xl">
+                    <option value="Cloud Computing / DevOps" className="text-xl">
                       Cloud Computing/DevOps
                     </option>
                     <option
-                      value="Networking/Network Security"
-                      className="text-xl">
+                      value="Networking / Network Security"
+                      className="text-xl"
+                    >
                       Networking/Network Security
                     </option>
                     <option value="Game Development" className="text-xl">
                       Game Development
                     </option>
-                    <option value="Embedded Systems/IoT"  className="text-xl">
+                    <option value="Embedded Systems / IoT" className="text-xl">
                       Embedded Systems/IoT
                     </option>
                     <option
                       value="Database Administration (SQL/NoSQL)"
-                      className="text-xl">
+                      className="text-xl"
+                    >
                       Database Administration (SQL/NoSQL)
                     </option>
                     <option value="AR/VR Development" className="text-xl">
@@ -140,7 +150,8 @@ export default function Page() {
                     </option>
                     <option
                       value="Blockchain / Web3 Development"
-                      className="text-xl">
+                      className="text-xl"
+                    >
                       Blockchain / Web3 Development
                     </option>
                     <option value="Cybersecurity" className="text-xl">
