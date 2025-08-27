@@ -55,7 +55,7 @@ export default function ProfilePage() {
     }
 
     loadUserAndProfile();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   async function loadUserAndProfile() {
@@ -144,7 +144,16 @@ export default function ProfilePage() {
 
       <Card className="w-full">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-2xl">Profile</CardTitle>
+          <CardTitle className="text-2xl">
+            {profile && (
+              <>
+                <h2 className="text-2xl font-bold">
+                  {profile.first_name} {profile.last_name}
+                </h2>
+                <p className=" text-sm text-gray-600">{profile.email}</p>
+              </>
+            )}
+          </CardTitle>
           <Link href="settings/edit-profile">
             <Button>
               <Edit className="h-4 w-4 mr-2" />
@@ -152,64 +161,6 @@ export default function ProfilePage() {
             </Button>
           </Link>
         </CardHeader>
-        <CardContent>
-          {profile ? (
-            <div className="space-y-6">
-              <div className="flex flex-col items-center">
-                {profile.profile_picture ? (
-                  <Image
-                    src={profile.profile_picture}
-                    alt="Profile"
-                    width={120}
-                    height={120}
-                    className="rounded-full object-cover border-2 border-gray-300 mb-4"
-                  />
-                ) : (
-                  <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center mb-4">
-                    <User size={64} className="text-gray-400" />
-                  </div>
-                )}
-                <h2 className="text-2xl font-bold">
-                  {profile.first_name} {profile.last_name}
-                </h2>
-                <p className="text-gray-600">{profile.email}</p>
-
-                {joinedDate && (
-                  <div className="flex items-center mt-2 text-sm text-muted-foreground">
-                    <Calendar className="h-4 w-4 mr-1" />
-                    Joined {joinedDate}
-                  </div>
-                )}
-              </div>
-
-              {profile.bio && (
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">About Me</h3>
-                  <p className="text-gray-700 whitespace-pre-line">
-                    {profile.bio}
-                  </p>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <User className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">No Profile Yet</h3>
-              <p className="text-gray-600 mb-4">
-                {user?.email && `Logged in as: ${user.email}`}
-              </p>
-              {joinedDate && (
-                <p className="text-sm text-muted-foreground mb-4 flex items-center justify-center">
-                  <Calendar className="h-4 w-4 mr-1" />
-                  Joined {joinedDate}
-                </p>
-              )}
-              <Link href="/profile/edit-profile">
-                <Button>Create Profile</Button>
-              </Link>
-            </div>
-          )}
-        </CardContent>
       </Card>
     </div>
   );

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { Entry } from "@/components/interfaces";
 import { Button } from "@/components/ui/button";
@@ -57,7 +58,7 @@ export default function ReadMorePage() {
           <p className=" text-red-500 mb-4">
             {error || "Entry not found"}
             <Link
-              href="/protected"
+              href="/user/dashboard"
               className=" inline-flex items-center mb-6 text-sm text-blue-600 hover:underline">
               <Button>
                 <ArrowLeft className="h-4 w-4 mr-2" />
@@ -82,7 +83,7 @@ export default function ReadMorePage() {
   return (
     <div className="container mx-auto py-8 px-4 max-w-4xl">
       <Link
-        href="/protected"
+        href="/user/dashboard"
         className="inline-flex items-center mb-6 text-sm text-blue-600 hover:underline">
         <ArrowLeft className="h-4 w-4 mr-2" />
         Back to all entries
