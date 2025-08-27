@@ -9,7 +9,6 @@ export default async function Page({
 }: {
   params: Promise<{ id: string }> | { id: string };
 }) {
-  // Handle both Next.js 14 and 15 params format
   const resolvedParams = await Promise.resolve(params);
   const userId = resolvedParams.id;
 
@@ -19,7 +18,6 @@ export default async function Page({
     data: { user: currentUser },
   } = await supabase.auth.getUser();
 
-  // Fetch the profile
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("id, first_name, last_name, bio")
@@ -41,7 +39,6 @@ export default async function Page({
     );
   }
 
-  // Check if current user is already following this profile
   let isFollowing = false;
   if (currentUser) {
     const { data: followData } = await supabase
