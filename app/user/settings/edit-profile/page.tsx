@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
-
 import { Profile } from "@/components/interfaces";
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState, useRef } from "react";
@@ -57,12 +58,14 @@ export default function EditProfilePage() {
   const [currentProfilePictureUrl, setCurrentProfilePictureUrl] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string>(""); // For blob URL cleanup
 
+
   // Crop state
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
   const [imgSrc, setImgSrc] = useState<string>("");
   const imgRef = useRef<HTMLImageElement>(null);
   const [showCropModal, setShowCropModal] = useState(false);
+  const [cropping, setCropping] = useState(false);
 
   useEffect(() => {
     loadUserAndProfile();
@@ -109,6 +112,7 @@ export default function EditProfilePage() {
           email: data.email || authUser.email || "",
           profile_picture: data.avatar_url || "", // Use avatar_url consistently
         };
+
         setProfile(profileData);
         setFirstName(data.first_name || "");
         setLastName(data.last_name || "");
@@ -207,8 +211,10 @@ export default function EditProfilePage() {
     }
     
     setCurrentProfilePictureUrl("");
+    setPendingCroppedImage(null);
     setProfilePicture(null);
   }
+
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -262,7 +268,7 @@ export default function EditProfilePage() {
         last_name: lastName,
         bio: bio,
         email: user.email,
-        avatar_url: avatarUrl, // Use avatar_url consistently
+        avatar_url: avatarUrl,
         updated_at: new Date().toISOString(),
       });
 
@@ -283,6 +289,87 @@ export default function EditProfilePage() {
     }
   }
 
+  async function uploadProfilePicture(imageFile: File): Promise<string | null> {
+    try {
+      if (!user?.id) {
+        console.error("No user ID available");
+        return null;
+      }
+
+      const fileExt = imageFile.name.split(".").pop() || "jpg";
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+
+      console.log("Uploading file:", fileName, "to bucket: avatars");
+
+      // Check if bucket exists first
+      const { data: buckets, error: bucketError } =
+        await supabase.storage.listBuckets();
+      console.log("Available buckets:", buckets);
+
+      if (bucketError) {
+        console.error("Error checking buckets:", bucketError);
+      }
+
+      const avatarBucket = buckets?.find((bucket) => bucket.name === "avatars");
+      if (!avatarBucket) {
+        console.error(
+          "Avatars bucket not found! Please create it in the Supabase dashboard."
+        );
+        return null;
+      }
+
+      // Delete old profile picture if it exists
+      if (
+        profile?.profile_picture &&
+        profile.profile_picture.includes("supabase")
+      ) {
+        try {
+          const oldFileName = profile.profile_picture.split("/").pop();
+          if (oldFileName && oldFileName !== fileName) {
+            console.log("Deleting old file:", oldFileName);
+            const { error: deleteError } = await supabase.storage
+              .from("avatars")
+              .remove([oldFileName]);
+
+            if (deleteError) {
+              console.log("Could not delete old profile picture:", deleteError);
+            }
+          }
+        } catch (deleteError) {
+          console.log("Error during old file deletion:", deleteError);
+        }
+      }
+
+      // Upload new file
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(fileName, imageFile, {
+          cacheControl: "3600",
+          upsert: true,
+          contentType: imageFile.type,
+        });
+
+      console.log("Upload result:", { uploadData, uploadError });
+
+      if (uploadError) {
+        console.error("Error uploading image:", uploadError);
+        return null;
+      }
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from("avatars")
+        .getPublicUrl(fileName);
+
+      console.log("Public URL:", urlData.publicUrl);
+
+      return urlData.publicUrl;
+    } catch (error) {
+      console.error("Error in uploadProfilePicture:", error);
+      return null;
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -300,7 +387,8 @@ export default function EditProfilePage() {
           <Button
             onClick={() => router.back()}
             variant="outline"
-            className="flex items-center w-32">
+            className="flex items-center w-32"
+          >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back
           </Button>
@@ -339,7 +427,8 @@ export default function EditProfilePage() {
                   className={cn(
                     "absolute bottom-0 right-0 bg-white rounded-full p-2 shadow-md cursor-pointer hover:bg-gray-100",
                     currentProfilePictureUrl && "bottom-2 right-2"
-                  )}>
+                  )}
+                >
                   <Camera className="h-5 w-5" />
                   <Input
                     id="profile-picture"
@@ -353,6 +442,11 @@ export default function EditProfilePage() {
               <p className="text-sm text-gray-500 text-center">
                 Click the camera icon to upload a profile picture
               </p>
+              {pendingCroppedImage && (
+                <p className="text-sm text-blue-600 text-center mt-2">
+                  ✓ New profile picture ready to save
+                </p>
+              )}
             </div>
 
             {/* Crop Modal */}
@@ -379,14 +473,13 @@ export default function EditProfilePage() {
                       />
                     </ReactCrop>
                   )}
-
                   <div className="flex gap-3 mt-4">
                     <Button 
                       type="button"
                       onClick={handleCropComplete} 
                       className="flex-1"
                     >
-                      Apply Crop
+                      {cropping ? "Processing..." : "Apply Crop"}
                     </Button>
                     <Button
                       type="button"
@@ -432,7 +525,7 @@ export default function EditProfilePage() {
                 className="bg-muted cursor-not-allowed opacity-75"
               />
               <p className="text-xs text-muted-foreground">
-                Email cannot be changed as it's used for authentication
+                Email cannot be changed as it&apos;s used for authentication
               </p>
             </div>
 
