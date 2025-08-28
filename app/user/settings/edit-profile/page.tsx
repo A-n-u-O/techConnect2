@@ -211,7 +211,6 @@ export default function EditProfilePage() {
     }
     
     setCurrentProfilePictureUrl("");
-    setPendingCroppedImage(null);
     setProfilePicture(null);
   }
 
@@ -442,11 +441,7 @@ export default function EditProfilePage() {
               <p className="text-sm text-gray-500 text-center">
                 Click the camera icon to upload a profile picture
               </p>
-              {pendingCroppedImage && (
-                <p className="text-sm text-blue-600 text-center mt-2">
-                  ✓ New profile picture ready to save
-                </p>
-              )}
+              
             </div>
 
             {/* Crop Modal */}
