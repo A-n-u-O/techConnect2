@@ -56,9 +56,8 @@ export default function EditProfilePage() {
   const [email, setEmail] = useState("");
   const [profilePicture, setProfilePicture] = useState<File | null>(null);
   const [currentProfilePictureUrl, setCurrentProfilePictureUrl] = useState("");
-  const [pendingCroppedImage, setPendingCroppedImage] = useState<File | null>(
-    null
-  );
+  const [previewUrl, setPreviewUrl] = useState<string>(""); // For blob URL cleanup
+
 
   // Crop state
   const [crop, setCrop] = useState<Crop>();
@@ -70,6 +69,13 @@ export default function EditProfilePage() {
 
   useEffect(() => {
     loadUserAndProfile();
+    
+    // Cleanup blob URLs on unmount
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
   }, []);
 
   async function loadUserAndProfile() {
@@ -104,16 +110,14 @@ export default function EditProfilePage() {
           last_name: data.last_name,
           bio: data.bio,
           email: data.email || authUser.email || "",
-          profile_picture: data.avatar_url || data.profile_picture,
+          profile_picture: data.avatar_url || "", // Use avatar_url consistently
         };
 
         setProfile(profileData);
         setFirstName(data.first_name || "");
         setLastName(data.last_name || "");
         setBio(data.bio || "");
-        setCurrentProfilePictureUrl(
-          data.avatar_url || data.profile_picture || ""
-        );
+        setCurrentProfilePictureUrl(data.avatar_url || "");
       }
     } catch (err) {
       console.error("Error loading profile:", err);
@@ -177,31 +181,35 @@ export default function EditProfilePage() {
   }
 
   async function handleCropComplete() {
-    setCropping(true);
-    try {
-      const croppedImageBlob = await getCroppedImg();
-      if (croppedImageBlob) {
-        const file = new File([croppedImageBlob], "profile-picture.jpg", {
-          type: "image/jpeg",
-        });
+    const croppedImageBlob = await getCroppedImg();
+    if (croppedImageBlob) {
+      const file = new File([croppedImageBlob], "profile-picture.jpg", {
+        type: "image/jpeg",
+      });
 
-        // Store the cropped file to be uploaded later
-        setPendingCroppedImage(file);
+      setProfilePicture(file);
 
-        // Create preview URL for immediate display
-        const previewUrl = URL.createObjectURL(croppedImageBlob);
-        setCurrentProfilePictureUrl(previewUrl);
-
-        setShowCropModal(false);
+      // Clean up previous preview URL
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
       }
-    } catch (error) {
-      console.error("Error cropping image:", error);
-    } finally {
-      setCropping(false);
+
+      // Create new preview URL and store it for cleanup
+      const newPreviewUrl = URL.createObjectURL(croppedImageBlob);
+      setPreviewUrl(newPreviewUrl);
+      setCurrentProfilePictureUrl(newPreviewUrl);
+
+      setShowCropModal(false);
     }
   }
 
   function removeProfilePicture() {
+    // Clean up preview URL
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl("");
+    }
+    
     setCurrentProfilePictureUrl("");
     setPendingCroppedImage(null);
     setProfilePicture(null);
@@ -218,43 +226,61 @@ export default function EditProfilePage() {
         return;
       }
 
-      let avatarUrl = currentProfilePictureUrl;
+      let avatarUrl = profile?.profile_picture || ""; // Keep existing URL as fallback
 
-      // Upload new profile picture if there's a pending cropped image
-      if (pendingCroppedImage) {
-        const uploadedUrl = await uploadProfilePicture(pendingCroppedImage);
-        if (uploadedUrl) {
-          avatarUrl = uploadedUrl;
-          // Clean up the blob URL
-          if (currentProfilePictureUrl.startsWith("blob:")) {
-            URL.revokeObjectURL(currentProfilePictureUrl);
-          }
-        } else {
-          console.error("Failed to upload profile picture");
+      // Upload new profile picture if selected
+      if (profilePicture) {
+        console.log("Uploading new profile picture...");
+        const fileExt = "jpg";
+        // Use folder structure expected by RLS: userId/filename
+        const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("avatars")
+          .upload(fileName, profilePicture, { 
+            upsert: true,
+            contentType: 'image/jpeg'
+          });
+
+        if (uploadError) {
+          console.error("Error uploading image:", uploadError);
           // Continue with form submission even if image upload fails
+        } else {
+          const { data: urlData } = supabase.storage
+            .from("avatars")
+            .getPublicUrl(fileName);
+          
+          avatarUrl = urlData.publicUrl;
+          console.log("Image uploaded successfully:", avatarUrl);
+          
+          // Clean up the preview URL since we now have the permanent URL
+          if (previewUrl) {
+            URL.revokeObjectURL(previewUrl);
+            setPreviewUrl("");
+          }
         }
       }
 
       // Update profile in database using upsert
-      const { error } = await supabase.from("profiles").upsert({
+      const { error: upsertError } = await supabase.from("profiles").upsert({
         id: user.id,
         first_name: firstName,
         last_name: lastName,
         bio: bio,
         email: user.email,
-        avatar_url: avatarUrl === "" ? null : avatarUrl, // Handle empty string case
+        avatar_url: avatarUrl,
         updated_at: new Date().toISOString(),
       });
 
-      if (error) {
-        console.error("Error saving profile:", error);
+      if (upsertError) {
+        console.error("Error saving profile:", upsertError);
         router.push("/user/profile?error=save_failed");
-      } else {
-        console.log("Profile saved successfully");
-        // Clean up pending image after successful save
-        setPendingCroppedImage(null);
-        router.push("/user/profile?success=true");
+        return;
       }
+
+      console.log("Profile saved successfully");
+      router.push("/user/profile?success=true");
+
     } catch (err) {
       console.error("Unexpected error in handleSubmit:", err);
       router.push("/user/profile?error=unexpected_error");
@@ -382,12 +408,12 @@ export default function EditProfilePage() {
                       width={120}
                       height={120}
                       className="rounded-full object-cover border-2 border-gray-300 w-32 h-32"
+                      unoptimized={currentProfilePictureUrl.startsWith('blob:')}
                     />
                     <button
                       type="button"
                       onClick={removeProfilePicture}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                    >
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600">
                       <X className="h-4 w-4" />
                     </button>
                   </div>
@@ -430,14 +456,14 @@ export default function EditProfilePage() {
                   <h3 className="text-lg font-semibold mb-4">
                     Crop your profile picture
                   </h3>
+
                   {imgSrc && (
                     <ReactCrop
                       crop={crop}
                       onChange={(_, percentCrop) => setCrop(percentCrop)}
                       onComplete={(c) => setCompletedCrop(c)}
                       aspect={1}
-                      circularCrop
-                    >
+                      circularCrop>
                       <img
                         ref={imgRef}
                         alt="Crop me"
@@ -448,10 +474,9 @@ export default function EditProfilePage() {
                     </ReactCrop>
                   )}
                   <div className="flex gap-3 mt-4">
-                    <Button
+                    <Button 
                       type="button"
-                      onClick={handleCropComplete}
-                      disabled={cropping}
+                      onClick={handleCropComplete} 
                       className="flex-1"
                     >
                       {cropping ? "Processing..." : "Apply Crop"}
@@ -460,9 +485,7 @@ export default function EditProfilePage() {
                       type="button"
                       variant="outline"
                       onClick={() => setShowCropModal(false)}
-                      disabled={cropping}
-                      className="flex-1"
-                    >
+                      className="flex-1">
                       Cancel
                     </Button>
                   </div>
@@ -524,8 +547,7 @@ export default function EditProfilePage() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => router.back()}
-              >
+                onClick={() => router.back()}>
                 Cancel
               </Button>
             </div>
