@@ -145,7 +145,7 @@ export default function ProfilePage() {
       <Card className="w-full">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-2xl">Profile</CardTitle>
-          <Link href="settings/edit-profile">
+          <Link href="/user/settings/edit-profile">
             <Button>
               <Edit className="h-4 w-4 mr-2" />
               {profile ? "Edit Profile" : "Create Profile"}
@@ -204,7 +204,7 @@ export default function ProfilePage() {
                   Joined {joinedDate}
                 </p>
               )}
-              <Link href="/profile/edit-profile">
+              <Link href="/settings/edit-profile">
                 <Button>Create Profile</Button>
               </Link>
             </div>

@@ -11,27 +11,32 @@ import { Textarea } from "@/components/ui/textarea";
 import { User, Camera, ArrowLeft, X } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import ReactCrop, { Crop, PixelCrop, centerCrop, makeAspectCrop } from "react-image-crop";
+import ReactCrop, {
+  Crop,
+  PixelCrop,
+  centerCrop,
+  makeAspectCrop,
+} from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 import { cn } from "@/lib/utils";
 
 function centerAspectCrop(
   mediaWidth: number,
   mediaHeight: number,
-  aspect: number,
+  aspect: number
 ) {
   return centerCrop(
     makeAspectCrop(
       {
-        unit: '%',
+        unit: "%",
         width: 90,
       },
       aspect,
       mediaWidth,
-      mediaHeight,
+      mediaHeight
     ),
     mediaWidth,
-    mediaHeight,
+    mediaHeight
   );
 }
 
@@ -50,6 +55,7 @@ export default function EditProfilePage() {
   const [email, setEmail] = useState("");
   const [profilePicture, setProfilePicture] = useState<File | null>(null);
   const [currentProfilePictureUrl, setCurrentProfilePictureUrl] = useState("");
+  const [previewUrl, setPreviewUrl] = useState<string>(""); // For blob URL cleanup
 
   // Crop state
   const [crop, setCrop] = useState<Crop>();
@@ -60,6 +66,13 @@ export default function EditProfilePage() {
 
   useEffect(() => {
     loadUserAndProfile();
+    
+    // Cleanup blob URLs on unmount
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
   }, []);
 
   async function loadUserAndProfile() {
@@ -94,13 +107,13 @@ export default function EditProfilePage() {
           last_name: data.last_name,
           bio: data.bio,
           email: data.email || authUser.email || "",
-          profile_picture: data.avatar_url || data.profile_picture,
+          profile_picture: data.avatar_url || "", // Use avatar_url consistently
         };
         setProfile(profileData);
         setFirstName(data.first_name || "");
         setLastName(data.last_name || "");
         setBio(data.bio || "");
-        setCurrentProfilePictureUrl(data.avatar_url || data.profile_picture || "");
+        setCurrentProfilePictureUrl(data.avatar_url || "");
       }
     } catch (err) {
       console.error("Error loading profile:", err);
@@ -113,8 +126,8 @@ export default function EditProfilePage() {
     if (e.target.files && e.target.files.length > 0) {
       setCrop(undefined);
       const reader = new FileReader();
-      reader.addEventListener('load', () =>
-        setImgSrc(reader.result?.toString() || ''),
+      reader.addEventListener("load", () =>
+        setImgSrc(reader.result?.toString() || "")
       );
       reader.readAsDataURL(e.target.files[0]);
       setShowCropModal(true);
@@ -130,10 +143,10 @@ export default function EditProfilePage() {
     if (!imgRef.current || !completedCrop) return null;
 
     const image = imgRef.current;
-    const canvas = document.createElement('canvas');
+    const canvas = document.createElement("canvas");
     const scaleX = image.naturalWidth / image.width;
     const scaleY = image.naturalHeight / image.height;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
 
     if (!ctx) return null;
 
@@ -149,13 +162,17 @@ export default function EditProfilePage() {
       0,
       0,
       completedCrop.width,
-      completedCrop.height,
+      completedCrop.height
     );
 
     return new Promise((resolve) => {
-      canvas.toBlob((blob) => {
-        resolve(blob);
-      }, 'image/jpeg', 0.9);
+      canvas.toBlob(
+        (blob) => {
+          resolve(blob);
+        },
+        "image/jpeg",
+        0.9
+      );
     });
   }
 
@@ -165,16 +182,30 @@ export default function EditProfilePage() {
       const file = new File([croppedImageBlob], "profile-picture.jpg", {
         type: "image/jpeg",
       });
-      
-      // Create preview URL
-      const previewUrl = URL.createObjectURL(croppedImageBlob);
-      setCurrentProfilePictureUrl(previewUrl);
+
       setProfilePicture(file);
+
+      // Clean up previous preview URL
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+
+      // Create new preview URL and store it for cleanup
+      const newPreviewUrl = URL.createObjectURL(croppedImageBlob);
+      setPreviewUrl(newPreviewUrl);
+      setCurrentProfilePictureUrl(newPreviewUrl);
+
       setShowCropModal(false);
     }
   }
 
   function removeProfilePicture() {
+    // Clean up preview URL
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl("");
+    }
+    
     setCurrentProfilePictureUrl("");
     setProfilePicture(null);
   }
@@ -189,48 +220,61 @@ export default function EditProfilePage() {
         return;
       }
 
-      let avatarUrl = currentProfilePictureUrl;
+      let avatarUrl = profile?.profile_picture || ""; // Keep existing URL as fallback
 
       // Upload new profile picture if selected
       if (profilePicture) {
-        try {
-          const fileExt = "jpg"; // Always jpg since we convert to jpeg
-          const fileName = `${user.id}-${Math.random()}.${fileExt}`;
-          const { error: uploadError } = await supabase.storage
-            .from("avatars")
-            .upload(fileName, profilePicture);
+        console.log("Uploading new profile picture...");
+        const fileExt = "jpg";
+        // Use folder structure expected by RLS: userId/filename
+        const fileName = `${user.id}/${Date.now()}.${fileExt}`;
 
-          if (uploadError) {
-            console.error("Error uploading image:", uploadError);
-          } else {
-            const { data: urlData } = supabase.storage
-              .from("avatars")
-              .getPublicUrl(fileName);
-            avatarUrl = urlData.publicUrl;
+        const { error: uploadError } = await supabase.storage
+          .from("avatars")
+          .upload(fileName, profilePicture, { 
+            upsert: true,
+            contentType: 'image/jpeg'
+          });
+
+        if (uploadError) {
+          console.error("Error uploading image:", uploadError);
+          // Continue with form submission even if image upload fails
+        } else {
+          const { data: urlData } = supabase.storage
+            .from("avatars")
+            .getPublicUrl(fileName);
+          
+          avatarUrl = urlData.publicUrl;
+          console.log("Image uploaded successfully:", avatarUrl);
+          
+          // Clean up the preview URL since we now have the permanent URL
+          if (previewUrl) {
+            URL.revokeObjectURL(previewUrl);
+            setPreviewUrl("");
           }
-        } catch (uploadError) {
-          console.error("Error in image upload:", uploadError);
         }
       }
 
       // Update profile in database using upsert
-      const { error } = await supabase.from("profiles").upsert({
+      const { error: upsertError } = await supabase.from("profiles").upsert({
         id: user.id,
         first_name: firstName,
         last_name: lastName,
         bio: bio,
         email: user.email,
-        avatar_url: avatarUrl,
+        avatar_url: avatarUrl, // Use avatar_url consistently
         updated_at: new Date().toISOString(),
       });
 
-      if (error) {
-        console.error("Error saving profile:", error);
+      if (upsertError) {
+        console.error("Error saving profile:", upsertError);
         router.push("/user/profile?error=save_failed");
-      } else {
-        console.log("Profile saved successfully");
-        router.push("/user/profile?success=true");
+        return;
       }
+
+      console.log("Profile saved successfully");
+      router.push("/user/profile?success=true");
+
     } catch (err) {
       console.error("Unexpected error in handleSubmit:", err);
       router.push("/user/profile?error=unexpected_error");
@@ -276,11 +320,12 @@ export default function EditProfilePage() {
                       width={120}
                       height={120}
                       className="rounded-full object-cover border-2 border-gray-300 w-32 h-32"
+                      unoptimized={currentProfilePictureUrl.startsWith('blob:')}
                     />
                     <button
+                      type="button"
                       onClick={removeProfilePicture}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                    >
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600">
                       <X className="h-4 w-4" />
                     </button>
                   </div>
@@ -314,16 +359,17 @@ export default function EditProfilePage() {
             {showCropModal && (
               <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
                 <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
-                  <h3 className="text-lg font-semibold mb-4">Crop your profile picture</h3>
-                  
+                  <h3 className="text-lg font-semibold mb-4">
+                    Crop your profile picture
+                  </h3>
+
                   {imgSrc && (
                     <ReactCrop
                       crop={crop}
                       onChange={(_, percentCrop) => setCrop(percentCrop)}
                       onComplete={(c) => setCompletedCrop(c)}
                       aspect={1}
-                      circularCrop
-                    >
+                      circularCrop>
                       <img
                         ref={imgRef}
                         alt="Crop me"
@@ -335,17 +381,18 @@ export default function EditProfilePage() {
                   )}
 
                   <div className="flex gap-3 mt-4">
-                    <Button
-                      onClick={handleCropComplete}
+                    <Button 
+                      type="button"
+                      onClick={handleCropComplete} 
                       className="flex-1"
                     >
                       Apply Crop
                     </Button>
                     <Button
+                      type="button"
                       variant="outline"
                       onClick={() => setShowCropModal(false)}
-                      className="flex-1"
-                    >
+                      className="flex-1">
                       Cancel
                     </Button>
                   </div>
@@ -404,11 +451,10 @@ export default function EditProfilePage() {
               <Button type="submit" disabled={saving}>
                 {saving ? "Saving..." : "Save Profile"}
               </Button>
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => router.back()}
-              >
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.back()}>
                 Cancel
               </Button>
             </div>

@@ -5,24 +5,17 @@ import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { User, Calendar } from "lucide-react";
+import { User, Calendar, Edit } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
-export default function SettingsPage() {
+export default function ProfilePage() {
   const supabase = createClient();
   const [profile, setProfile] = useState<Profile | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [joinedDate, setJoinedDate] = useState("");
-  const [followers, setFollowers] = useState(0);
-  const [followings, setFollowings] = useState(0);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [error, setError] = useState<string | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [userId, setUserId] = useState<string | null>(null);
   const [message, setMessage] = useState<{
     type: "success" | "error";
     text: string;
@@ -37,7 +30,7 @@ export default function SettingsPage() {
 
     if (success) {
       setMessage({ type: "success", text: "Profile updated successfully!" });
-      // Clear the message after 5 seconds
+      // Clear the message after 3 seconds
       setTimeout(() => setMessage(null), 3000);
 
       // Clear the URL parameters
@@ -48,11 +41,17 @@ export default function SettingsPage() {
     }
 
     if (error) {
+      let errorMessage = "Failed to update profile. Please try again.";
+      if (error === "no_user") errorMessage = "No user found. Please log in again.";
+      if (error === "save_failed") errorMessage = "Failed to save profile. Please try again.";
+      if (error === "unexpected_error") errorMessage = "An unexpected error occurred.";
+      
       setMessage({
         type: "error",
-        text: "Failed to update profile. Please try again.",
+        text: errorMessage,
       });
-      setTimeout(() => setMessage(null), 3000);
+      setTimeout(() => setMessage(null), 5000);
+      
       // Clear the URL parameters
       const url = new URL(window.location.href);
       url.searchParams.delete("success");
@@ -61,66 +60,7 @@ export default function SettingsPage() {
     }
 
     loadUserAndProfile();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
-
-  useEffect(() => {
-    const getCounts = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-
-        if (user) {
-          console.log("Current user ID:", user.id);
-          setUserId(user.id);
-
-          const { count: followersCount, error: followersError } =
-            await supabase
-              .from("follows")
-              .select("follower_id", { count: "exact", head: true })
-              .eq("following_id", user.id);
-
-          if (followersError) {
-            console.error("Error getting followers:", followersError);
-            setError(`Followers error: ${followersError.message}`);
-            return;
-          }
-
-          const { count: followingCount, error: followingError } =
-            await supabase
-              .from("follows")
-              .select("following_id", { count: "exact", head: true })
-              .eq("follower_id", user.id);
-
-          if (followingError) {
-            console.error("Error getting following:", followingError);
-            setError(`Following error: ${followingError.message}`);
-            return;
-          }
-
-          console.log("Followers count:", followersCount);
-          console.log("Following count:", followingCount);
-
-          setFollowers(followersCount ?? 0);
-          setFollowings(followingCount ?? 0);
-        } else {
-          console.log("No logged in user");
-          setError("No logged in user");
-        }
-      } catch (err) {
-        console.error("Unexpected error:", err);
-        setError(`Unexpected error: ${err}`);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    getCounts();
-  }, [supabase]);
 
   async function loadUserAndProfile() {
     try {
@@ -165,8 +105,9 @@ export default function SettingsPage() {
           last_name: data.last_name,
           bio: data.bio,
           email: data.email || authUser.email || "",
-          profile_picture: data.avatar_url || data.profile_picture,
+          profile_picture: data.avatar_url || "", // Use avatar_url consistently
         };
+
         setProfile(profileData);
       }
     } catch (err) {
@@ -180,7 +121,7 @@ export default function SettingsPage() {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <p>Loading...</p>
+          <p>Loading profile...</p>
         </div>
       </div>
     );
@@ -190,9 +131,10 @@ export default function SettingsPage() {
     <div className="container mx-auto py-8 px-4 max-w-4xl">
       {/* navigation header  */}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Profile</h1>
+        <h1 className="text-2xl font-bold">Your Profile</h1>
         <div className="w-24"></div> {/* Spacer for balanced layout */}
       </div>
+      
       {/* Success/Error Messages */}
       {message && (
         <div
@@ -200,33 +142,22 @@ export default function SettingsPage() {
             message.type === "success"
               ? "bg-green-100 text-green-800 border border-green-200"
               : "bg-red-100 text-red-800 border border-red-200"
-          }`}
-        >
+          }`}>
           {message.text}
         </div>
       )}
 
       <Card className="w-full">
         <CardHeader className="flex flex-row items-center justify-between">
-          {profile ? (
-            <>
-              <CardTitle className="text-2xl">
-                {profile.first_name} {profile.last_name}
-              </CardTitle>
-            </>
-          ) : (
-            <p className="text-gray-600 mb-4">
-              {user?.email && `Logged in as: ${user.email}`}
-            </p>
-          )}
+          <CardTitle className="text-2xl">Profile Details</CardTitle>
+          <Link href="/user/settings/edit-profile">
+            <Button>
+              <Edit className="h-4 w-4 mr-2" />
+              {profile ? "Edit Profile" : "Create Profile"}
+            </Button>
+          </Link>
         </CardHeader>
         <CardContent>
-          <h1>
-            Followers: <b>{followers}</b>
-          </h1>
-          <h1>
-            Following: <b>{followings}</b>{" "}
-          </h1>
           {profile ? (
             <div className="space-y-6">
               <div className="flex flex-col items-center">
@@ -236,13 +167,16 @@ export default function SettingsPage() {
                     alt="Profile"
                     width={120}
                     height={120}
-                    className="rounded-full object-cover border-2 border-gray-300 mb-4"
+                    className="rounded-full object-cover border-2 border-gray-300 mb-4 w-32 h-32"
                   />
                 ) : (
                   <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center mb-4">
                     <User size={64} className="text-gray-400" />
                   </div>
                 )}
+                <h2 className="text-2xl font-bold">
+                  {profile.first_name} {profile.last_name}
+                </h2>
                 <p className="text-gray-600">{profile.email}</p>
 
                 {joinedDate && (
@@ -255,7 +189,7 @@ export default function SettingsPage() {
 
               {profile.bio && (
                 <div>
-                  <h3 className="text-lg font-semibold mb-2">Bio</h3>
+                  <h3 className="text-lg font-semibold mb-2">About Me</h3>
                   <p className="text-gray-700 whitespace-pre-line">
                     {profile.bio}
                   </p>
@@ -275,7 +209,7 @@ export default function SettingsPage() {
                   Joined {joinedDate}
                 </p>
               )}
-              <Link href="/settings/edit-profile">
+              <Link href="/user/settings/edit-profile">
                 <Button>Create Profile</Button>
               </Link>
             </div>
