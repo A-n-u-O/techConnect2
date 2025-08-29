@@ -20,7 +20,7 @@ export async function createClient() {
         setAll(cookiesToSet) {
           try {
             cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options),
+              cookieStore.set(name, value, options)
             );
           } catch {
             // The `setAll` method was called from a Server Component.
@@ -28,7 +28,18 @@ export async function createClient() {
             // user sessions.
           }
         },
+        deleteAll(cookiesToDelete) {
+          try {
+            cookiesToDelete.forEach(({ name, options }) =>
+              cookieStore.delete(name, options)
+            );
+          } catch {
+            // The `deleteAll` method was called from a Server Component.
+            // This can be ignored if you have middleware refreshing
+            // user sessions.
+          }
+        },
       },
-    },
+    }
   );
 }

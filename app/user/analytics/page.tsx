@@ -1,10 +1,21 @@
-export default function Page() {
-    return (
-        <div>
-            <h1>
-                This is the Analytics page.
-            </h1>
-            <p>Here you will see how much your following has grown over time as well as your likes and other information</p>
-        </div>
-    )
+import FollowersChart from "@/components/followers";
+import { createClient } from "@/lib/supabase/server";
+
+export default async function AnalyticsPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const userId = user?.id;
+    
+  return (
+    <div className="w-[1000px] p-6">
+      <h1 className="text-xl font-bold mb-4">Followers Growth</h1>
+      {userId ? (
+        <FollowersChart userId={userId} />
+      ) : (
+        <div>User not found.</div>
+      )}
+    </div>
+  );
 }

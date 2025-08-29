@@ -6,7 +6,6 @@ import {
   User,
   Settings,
   BarChart3,
-  Bell,
   HelpCircle,
 } from "lucide-react";
 
@@ -17,7 +16,6 @@ export default function SidebarClient({ firstName }: { firstName: string }) {
     { name: "Dashboard", href: "/user/dashboard", icon: LayoutDashboard },
     { name: "Profile", href: "/user/profile", icon: User },
     { name: "Analytics", href: "/user/analytics", icon: BarChart3 },
-    { name: "Notifications", href: "/user/notifications", icon: Bell },
     { name: "Settings", href: "/user/settings", icon: Settings },
     { name: "Help & Support", href: "/user/help", icon: HelpCircle },
   ];
