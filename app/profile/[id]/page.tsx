@@ -4,11 +4,11 @@ import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { revalidatePath } from "next/cache";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { User, Calendar, Users, FileText } from "lucide-react";
 import Image from "next/image";
+import FollowButton from "@/components/follow-button";
+import FollowerCount from "@/components/followers-count";
 
 export default async function UserProfilePage({
   params,
@@ -23,7 +23,6 @@ export default async function UserProfilePage({
   const {
     data: { user: currentUser },
   } = await supabase.auth.getUser();
-
 
   // Fetch user profile with avatar
   const { data: profile, error: profileError } = await supabase
@@ -53,10 +52,8 @@ export default async function UserProfilePage({
     );
   }
 
-  // Check if following (only if logged in)
   let isFollowing = false;
   let followerCount = 0;
-  let followingCount = 0;
 
   if (currentUser) {
     const { data: followData } = await supabase
@@ -75,13 +72,7 @@ export default async function UserProfilePage({
     .select("*", { count: "exact", head: true })
     .eq("following_id", userId);
 
-  const { count: following } = await supabase
-    .from("follows")
-    .select("*", { count: "exact", head: true })
-    .eq("follower_id", userId);
-
   followerCount = followers || 0;
-  followingCount = following || 0;
 
   // Fetch user's entries/posts
   const { data: entries, error: entriesError } = await supabase
@@ -100,64 +91,6 @@ export default async function UserProfilePage({
       })
     : "";
 
-  // Follow action
-  async function follow() {
-    "use server";
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      redirect("/login");
-    }
-
-    // Check if already following to prevent duplicates
-    const { data: existingFollow } = await supabase
-      .from("follows")
-      .select("id")
-      .eq("follower_id", user.id)
-      .eq("following_id", userId)
-      .single();
-
-    if (!existingFollow) {
-      const { error } = await supabase.from("follows").insert({
-        follower_id: user.id,
-        following_id: userId,
-      });
-
-      if (error) {
-        console.error("Follow error:", error);
-      }
-    }
-
-    revalidatePath(`/profile/${userId}`);
-  }
-
-  // Unfollow action
-  async function unfollow() {
-    "use server";
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) return;
-
-    const { error } = await supabase
-      .from("follows")
-      .delete()
-      .eq("follower_id", user.id)
-      .eq("following_id", userId);
-
-    if (error) {
-      console.error("Unfollow error:", error);
-    }
-
-    revalidatePath(`/profile/${userId}`);
-  }
 
   const isOwnProfile = currentUser?.id === userId;
 
@@ -209,15 +142,8 @@ export default async function UserProfilePage({
                   <div className="text-center">
                     <div className="flex items-center gap-1 text-gray-500">
                       <Users size={16} />
-                      <span className="font-semibold">{followerCount}</span>
+                      <span className="font-semibold"><FollowerCount viewedUserId={ profile.id} /></span>
                       <span className="text-sm">Followers</span>
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <div className="flex items-center gap-1 text-gray-500">
-                      <Users size={16} />
-                      <span className="font-semibold">{followingCount}</span>
-                      <span className="text-sm">Following</span>
                     </div>
                   </div>
                   <div className="text-center">
@@ -238,36 +164,10 @@ export default async function UserProfilePage({
                   </div>
                 )}
 
-                {/* Action Buttons */}
-                <div className="flex justify-center md:justify-start gap-3">
-                  {currentUser && !isOwnProfile && (
-                    <form action={isFollowing ? unfollow : follow}>
-                      <Button
-                        type="submit"
-                        variant={isFollowing ? "outline" : "default"}
-                        className={
-                          isFollowing
-                            ? "hover:bg-red-50 hover:text-red-600 hover:border-red-300"
-                            : ""
-                        }
-                      >
-                        {isFollowing ? "Unfollow" : "Follow"}
-                      </Button>
-                    </form>
-                  )}
-
-                  {!currentUser && (
-                    <Link href="/login">
-                      <Button>Sign in to Follow</Button>
-                    </Link>
-                  )}
-
-                  {isOwnProfile && (
-                    <Link href="/user/settings/edit-profile">
-                      <Button variant="outline">Edit Profile</Button>
-                    </Link>
-                  )}
-                </div>
+                <FollowButton
+                  currentUserId={currentUser?.id ?? ""}
+                  viewedUserId={profile.id}
+                />
               </div>
             </div>
           </CardContent>
@@ -285,29 +185,31 @@ export default async function UserProfilePage({
             {entries && entries.length > 0 ? (
               <div className="space-y-4">
                 {entries.map((entry) => (
-                  <div
-                    key={entry.id}
-                    className="border-b border-gray-200 last:border-b-0 pb-4 last:pb-0"
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-semibold text-lg hover:text-blue-600 cursor-pointer">
-                        {entry.title}
-                      </h3>
-                      {entry.category && (
-                        <Badge variant="secondary">{entry.category}</Badge>
-                      )}
+                  <Link key={entry.id} href={`/home/entry/${entry.id}`}>
+                    <div className="border-b border-gray-200 last:border-b-0 pb-4 last:pb-0">
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="font-semibold text-lg hover:text-blue-600 cursor-pointer">
+                          {entry.title}
+                        </h3>
+                        {entry.category && (
+                          <Badge variant="secondary">{entry.category}</Badge>
+                        )}
+                      </div>
+                      <p className="text-gray-600 mb-2 line-clamp-3">
+                        {entry.description}
+                      </p>
+                      <p className="text-sm text-gray-400">
+                        {new Date(entry.created_at).toLocaleDateString(
+                          "en-US",
+                          {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          }
+                        )}
+                      </p>
                     </div>
-                    <p className="text-gray-600 mb-2 line-clamp-3">
-                      {entry.description}
-                    </p>
-                    <p className="text-sm text-gray-400">
-                      {new Date(entry.created_at).toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
-                    </p>
-                  </div>
+                  </Link>
                 ))}
               </div>
             ) : (

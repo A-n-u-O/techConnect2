@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { MessageCircleMore, Heart } from "lucide-react";
+import Link from "next/link";
 
 export default async function Page({
   params,
@@ -105,7 +106,9 @@ export default async function Page({
                 className="w-16 h-16 rounded-full object-cover"
               />
               <div className="flex-1">
-                <h3 className="font-bold text-lg">{authorName}</h3>
+                <Link href={`/profile/${entry.profiles?.id}`}>
+                  <h3 className="font-bold text-lg">{authorName}</h3>
+                </Link>
                 <p className="text-gray-600 text-sm">{entry.profiles?.bio}</p>
                 <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
                   <span>
@@ -135,7 +138,7 @@ export default async function Page({
                   {entry.description}
                 </p>
               </div>
-              <div>
+              <div className="flex gap-5 mt-2">
                 <span>
                   <Heart />
                 </span>

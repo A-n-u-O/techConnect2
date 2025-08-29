@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { createClient } from "@/lib/supabase/server"; 
+import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { User, Calendar, Edit } from "lucide-react";
@@ -7,6 +7,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Profile } from "@/components/interfaces";
+import FollowerCount from "@/components/followers-count";
 
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -34,6 +35,11 @@ export default async function ProfilePage() {
     .eq("id", authUser.id)
     .single();
 
+  const { count: followingCount, error: followingError } = await supabase
+    .from("follows")
+    .select("*", { count: "exact", head: true })
+    .eq("following_id", authUser.id);
+
   const profile: Profile | null = profileData
     ? {
         id: profileData.id,
@@ -55,13 +61,7 @@ export default async function ProfilePage() {
 
       <Card className="w-full">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-2xl">Profile Details</CardTitle>
-          <Link href="/user/settings/edit-profile">
-            <Button>
-              <Edit className="h-4 w-4 mr-2" />
-              {profile ? "Edit Profile" : "Create Profile"}
-            </Button>
-          </Link>
+          <CardTitle className="text-2xl">{`${profile?.first_name} ${profile?.last_name}`}</CardTitle>
         </CardHeader>
         <CardContent>
           {profile ? (
@@ -80,9 +80,17 @@ export default async function ProfilePage() {
                     <User size={64} className="text-gray-400" />
                   </div>
                 )}
-                <h2 className="text-2xl font-bold">
-                  {profile.first_name} {profile.last_name}
-                </h2>
+
+                <div className="flex items-center gap-1 text-black">
+                  <span className="font-semibold">
+                    <FollowerCount viewedUserId={authUser.id} />
+                  </span>
+                  <span className="text-md">Followers</span>
+                </div>
+                <p>
+                  {followingCount ?? 0}{" "}
+                  {(followingCount ?? 0) > 1 ? "following" : "following"}
+                </p>
                 <p className="text-gray-600">{profile.email}</p>
 
                 {joinedDate && (
