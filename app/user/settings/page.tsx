@@ -1,134 +1,68 @@
-"use client";
-
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Profile } from "@/components/interfaces";
-import { createClient } from "@/lib/supabase/client";
-import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { createClient } from "@/lib/supabase/server"; // <-- use server version
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { User, Calendar, Edit } from "lucide-react";
-import Image from "next/image";
+import { Edit } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 
-export default function ProfilePage() {
-  const supabase = createClient();
-  const [profile, setProfile] = useState<Profile | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [joinedDate, setJoinedDate] = useState("");
-  const [message, setMessage] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
+interface ProfilePageProps {
+  searchParams?: { success?: string; error?: string };
+}
 
-  const searchParams = useSearchParams();
+export default async function ProfilePage({ searchParams }: ProfilePageProps) {
+  const supabase = await createClient();
 
-  useEffect(() => {
-    // Check for success/error messages from edit page
-    const success = searchParams.get("success");
-    const error = searchParams.get("error");
+  // Get the current authenticated user
+  const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser();
 
-    if (success) {
-      setMessage({ type: "success", text: "Profile updated successfully!" });
-      // Clear the message after 5 seconds
-      setTimeout(() => setMessage(null), 3000);
+  let profile: Profile | null = null;
+  let joinedDate = "";
 
-      // Clear the URL parameters
-      const url = new URL(window.location.href);
-      url.searchParams.delete("success");
-      url.searchParams.delete("error");
-      window.history.replaceState({}, "", url.toString());
-    }
-
-    if (error) {
-      setMessage({
-        type: "error",
-        text: "Failed to update profile. Please try again.",
+  if (authUser) {
+    if (authUser.created_at) {
+      joinedDate = new Date(authUser.created_at).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
       });
-      setTimeout(() => setMessage(null), 3000);
-      // Clear the URL parameters
-      const url = new URL(window.location.href);
-      url.searchParams.delete("success");
-      url.searchParams.delete("error");
-      window.history.replaceState({}, "", url.toString());
     }
 
-    loadUserAndProfile();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+    // Load profile data
+    const { data } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", authUser.id)
+      .single();
 
-  async function loadUserAndProfile() {
-    try {
-      const {
-        data: { user: authUser },
-        error: userError,
-      } = await supabase.auth.getUser();
-
-      if (userError || !authUser) {
-        console.error("No authenticated user", userError);
-        setLoading(false);
-        return;
-      }
-
-      setUser(authUser);
-
-      // Format joined date
-      if (authUser.created_at) {
-        setJoinedDate(
-          new Date(authUser.created_at).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          })
-        );
-      }
-
-      // Load profile data
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", authUser.id)
-        .single();
-
-      if (error) {
-        console.error("Error loading profile:", error);
-        // It's okay if no profile exists yet
-      } else if (data) {
-        const profileData: Profile = {
-          id: data.id,
-          first_name: data.first_name,
-          last_name: data.last_name,
-          bio: data.bio,
-          email: data.email || authUser.email || "",
-          profile_picture: data.avatar_url || data.profile_picture,
-        };
-        setProfile(profileData);
-      }
-    } catch (err) {
-      console.error("Unexpected error loading profile:", err);
-    } finally {
-      setLoading(false);
+    if (data) {
+      profile = {
+        id: data.id,
+        first_name: data.first_name,
+        last_name: data.last_name,
+        bio: data.bio,
+        email: data.email || authUser.email || "",
+        profile_picture: data.avatar_url || data.profile_picture,
+      };
     }
   }
 
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <p>Loading profile...</p>
-        </div>
-      </div>
-    );
-  }
+  const message = searchParams?.success
+    ? { type: "success", text: "Profile updated successfully!" }
+    : searchParams?.error
+    ? { type: "error", text: "Failed to update profile. Please try again." }
+    : null;
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-4xl">
-      {/* navigation header  */}
+      {/* navigation header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Profile Settings</h1>
-        <div className="w-24"></div> {/* Spacer for balanced layout */}
+        <div className="w-24"></div>
       </div>
+
       {/* Success/Error Messages */}
       {message && (
         <div
@@ -144,7 +78,6 @@ export default function ProfilePage() {
 
       <Card className="w-full">
         <CardHeader className="flex flex-row items-center justify-between">
-
           <CardTitle className="text-2xl">
             {profile && (
               <>
