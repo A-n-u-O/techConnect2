@@ -1,13 +1,18 @@
 "use client";
-
 import { LogoutButton } from "@/components/logout-button";
 import Link from "next/link";
 import { useState } from "react";
-import { FloatingIndicator, Tabs } from "@mantine/core";
+import { FloatingIndicator, UnstyledButton } from "@mantine/core";
 import classes from "@/components/Demo.module.css";
 import { usePathname } from "next/navigation";
 import "@mantine/core/styles.css";
 import "@mantine/spotlight/styles.css";
+
+const navigationData = [
+  { label: "Home", href: "/home", value: "/home" },
+  { label: "Search", href: "/search", value: "/search" },
+  { label: "Profile", href: "/user/dashboard/", value: "/user/dashboard" },
+];
 
 export default function ProfileNav() {
   const [rootRef, setRootRef] = useState<HTMLDivElement | null>(null);
@@ -15,10 +20,29 @@ export default function ProfileNav() {
   const [controlsRefs, setControlsRefs] = useState<
     Record<string, HTMLButtonElement | null>
   >({});
-  const setControlRef = (val: string) => (node: HTMLButtonElement) => {
-    controlsRefs[val] = node;
+
+  // Find the active index based on current pathname
+  const activeIndex = navigationData.findIndex(
+    (item) => item.value === pathname
+  );
+
+  const setControlRef = (value: string) => (node: HTMLButtonElement) => {
+    controlsRefs[value] = node;
     setControlsRefs(controlsRefs);
   };
+
+  const controls = navigationData.map((item) => (
+    <UnstyledButton
+      key={item.value}
+      className={classes.control}
+      ref={setControlRef(item.value)}
+      data-active={pathname === item.value || undefined}
+    >
+      <Link href={item.href} className={classes.controlLabel}>
+        {item.label}
+      </Link>
+    </UnstyledButton>
+  ));
 
   return (
     <nav className="w-full flex justify-center border-b border-b-foreground/10 h-16">
@@ -28,41 +52,20 @@ export default function ProfileNav() {
             TechConnect
           </Link>
         </div>
-        <div>
-          <Tabs variant="none" value={pathname} onChange={() => {}}>
-            <Tabs.List ref={setRootRef} className={classes.list}>
-              <Tabs.Tab
-                value="/home"
-                ref={setControlRef("/home")}
-                className={classes.tab}
-              >
-                <Link href="/home">Home</Link>
-              </Tabs.Tab>
-              <Tabs.Tab
-                value="/search"
-                ref={setControlRef("/search")}
-                className={classes.tab}
-              >
-                <Link href="/search">Search</Link>
-              </Tabs.Tab>
-              <Tabs.Tab
-                value="/user"
-                ref={setControlRef("/user")}
-                className={classes.tab}
-              >
-                <Link href="/user/dashboard">Profile</Link>
-              </Tabs.Tab>
 
-              <FloatingIndicator
-                target={pathname ? controlsRefs[pathname] : null}
-                parent={rootRef}
-                className={
-                  "!top-0 !bottom-0 flex items-center " + classes.indicator
-                }
-              />
-            </Tabs.List>
-          </Tabs>
+        <div className={classes.root} ref={setRootRef}>
+          {controls}
+          <FloatingIndicator
+            target={
+              activeIndex >= 0
+                ? controlsRefs[navigationData[activeIndex].value]
+                : null
+            }
+            parent={rootRef}
+            className={classes.indicator}
+          />
         </div>
+
         <LogoutButton />
       </div>
     </nav>
