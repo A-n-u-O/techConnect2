@@ -2,6 +2,7 @@
 // app/home/entry/[id]/page.tsx
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
+import { MessageCircleMore, Heart } from "lucide-react";
 
 export default async function Page({
   params,
@@ -89,6 +90,8 @@ export default async function Page({
         entry.profiles?.last_name || ""
       }`.trim() || "Unknown User";
 
+    const authorFirstName = `${entry.profiles?.first_name}`;
+
     return (
       <div className="max-w-4xl mx-auto py-10 px-4">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -132,34 +135,15 @@ export default async function Page({
                   {entry.description}
                 </p>
               </div>
-            </article>
-
-            {/* Engagement Section */}
-            <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-4">
-                  <button
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full transition-colors ${
-                      userHasLiked
-                        ? "bg-red-100 text-red-600 hover:bg-red-200"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                    }`}
-                  >
-                    <span>{userHasLiked ? "❤️" : "🤍"}</span>
-                    <span>
-                      {likesCount} {likesCount === 1 ? "Like" : "Likes"}
-                    </span>
-                  </button>
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <span>💬</span>
-                    <span>
-                      {comments?.length || 0}{" "}
-                      {(comments?.length || 0) === 1 ? "Comment" : "Comments"}
-                    </span>
-                  </div>
-                </div>
+              <div>
+                <span>
+                  <Heart />
+                </span>
+                <span>
+                  <MessageCircleMore />
+                </span>
               </div>
-            </div>
+            </article>
 
             {/* Comments Section */}
             <div className="bg-white rounded-lg shadow-sm border p-6">
@@ -207,27 +191,11 @@ export default async function Page({
 
           {/* Sidebar */}
           <div className="lg:col-span-1">
-            {/* Author Info Card */}
-            <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-              <h3 className="font-bold text-lg mb-3">About the Author</h3>
-              <div className="text-center">
-                <img
-                  src={entry.profiles?.avatar_url || "/default-avatar.png"}
-                  alt={authorName}
-                  className="w-20 h-20 rounded-full object-cover mx-auto mb-3"
-                />
-                <h4 className="font-semibold">{authorName}</h4>
-                <p className="text-gray-600 text-sm mt-2">
-                  {entry.profiles?.bio || "No bio available"}
-                </p>
-              </div>
-            </div>
-
             {/* Related Posts */}
             {relatedEntries && relatedEntries.length > 0 && (
               <div className="bg-white rounded-lg shadow-sm border p-6">
                 <h3 className="font-bold text-lg mb-4">
-                  More from {authorName}
+                  More from {authorFirstName}
                 </h3>
                 <div className="space-y-3">
                   {relatedEntries.map((relatedEntry) => (
