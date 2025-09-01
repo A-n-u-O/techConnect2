@@ -7,6 +7,7 @@ import classes from "@/components/Demo.module.css";
 import { usePathname } from "next/navigation";
 import "@mantine/core/styles.css";
 import "@mantine/spotlight/styles.css";
+import BurgerMenu from './burger';
 
 const navigationData = [
   { label: "Home", href: "/home", value: "/home" },
@@ -47,23 +48,28 @@ export default function ProfileNav() {
   return (
     <nav className="w-full flex justify-center border-b border-b-foreground/10 h-16">
       <div className="w-full max-w-5xl flex justify-between items-center p-3 px-5 text-sm">
+        <div className="block md:hidden">
+          <BurgerMenu/>
+        </div>
         <div className="flex items-center font-semibold">
           <Link href={"/"} className="text-base">
             TechConnect
           </Link>
         </div>
 
-        <div className={classes.root} ref={setRootRef}>
-          {controls}
-          <FloatingIndicator
-            target={
-              activeIndex >= 0
-                ? controlsRefs[navigationData[activeIndex].value]
-                : null
-            }
-            parent={rootRef}
-            className={classes.indicator}
-          />
+        <div className="hidden md:block">
+          <div className={classes.root} ref={setRootRef}>
+            {controls}
+            <FloatingIndicator
+              target={
+                activeIndex >= 0
+                  ? controlsRefs[navigationData[activeIndex].value]
+                  : null
+              }
+              parent={rootRef}
+              className={classes.indicator}
+            />
+          </div>
         </div>
 
         <LogoutButton />

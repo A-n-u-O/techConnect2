@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import SidebarClient from "./SidebarClient";
+import SidebarClientDesktop from "./SidebarClient";
+import MobileSidebarComponent from "./SidebarMobile";
 
 export default async function Sidebar() {
   const supabase = await createClient();
@@ -20,5 +21,15 @@ export default async function Sidebar() {
     .eq("id", user?.id)
     .single();
 
-  return <SidebarClient firstName={profileData?.first_name ?? "Developer"} />;
+  return (
+    <div>
+      <div className="block md:hidden">{/* <MobileSidebarComponent /> */}</div>
+
+      <div className="hidden md:block">
+        <SidebarClientDesktop
+          firstName={profileData?.first_name ?? "Developer"}
+        />
+      </div>
+    </div>
+  );
 }
