@@ -16,30 +16,37 @@ export default async function ProtectedPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
   const { data: entries } = await supabase
     .from("entries")
     .select("*")
     .eq("user_id", user?.id)
     .order("created_at", { ascending: false });
 
-
-
   return (
-    <div className="flex-1 w-full">
-      <div className="flex flex-col gap-2 items-start">
-        
+    <div className="flex-1 w-full pt-[30px]">
+      <div className="flex flex-col gap-4 items-start">
         <h2 className="text-2xl font-bold">My Entries</h2>
         <Divider my="md" />
-        <Button>
+
+        <Button asChild>
           <Link href="/user/new-entry">Add new entry</Link>
         </Button>
-        <br />
 
-        <div className="flex flex-row gap-4 overflow-x-auto">
+        {/* Entries list */}
+        <div className="w-full">
           {!entries || entries.length === 0 ? (
             <span>You haven&apos;t made any entries!</span>
           ) : (
-            <EntryCards entries={entries} />
+            <div
+              className="
+                grid grid-cols-1 gap-4 
+                sm:grid-cols-2 
+                lg:grid-cols-3
+              "
+            >
+              <EntryCards entries={entries} />
+            </div>
           )}
         </div>
       </div>
