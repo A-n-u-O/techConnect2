@@ -39,7 +39,7 @@ export default async function ProfilePage() {
   const { count: followingCount } = await supabase
     .from("follows")
     .select("*", { count: "exact", head: true })
-    .eq("follower_id", authUser.id); 
+    .eq("follower_id", authUser.id);
 
   const profile: Profile | null = profileData
     ? {
@@ -60,74 +60,82 @@ export default async function ProfilePage() {
       </div>
 
       <Card className="w-full">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-2xl">{`${profile?.first_name} ${profile?.last_name}`}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {profile ? (
-            <div className="space-y-6">
-              <div className="flex flex-col items-center">
-                {profile.profile_picture ? (
-                  <Image
-                    src={profile.profile_picture}
-                    alt="Profile"
-                    width={120}
-                    height={120}
-                    className="rounded-full object-cover border-2 border-gray-300 mb-4 w-32 h-32"
-                  />
-                ) : (
-                  <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center mb-4">
-                    <User size={64} className="text-gray-400" />
-                  </div>
-                )}
+  <CardHeader>
+    <div className="flex flex-col items-center text-center space-y-4">
+      {profile?.profile_picture ? (
+        <Image
+          src={profile.profile_picture}
+          alt="Profile"
+          width={120}
+          height={120}
+          className="rounded-full object-cover border-2 border-gray-300 w-32 h-32"
+        />
+      ) : (
+        <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center">
+          <User size={64} className="text-gray-400" />
+        </div>
+      )}
 
-                {/* Followers + Following */}
-                <div className="flex items-center gap-1 text-black">
-                  <span className="font-semibold">
-                    <FollowerCount viewedUserId={authUser.id} />
-                  </span>
-                  <span className="text-md">Followers</span>
-                </div>
-                <p>
-                  {followingCount ?? 0}{" "}
-                  {(followingCount ?? 0) === 1 ? "Following" : "Following"}
-                </p>
+      <div>
+        <h2 className="text-2xl font-bold">
+          {profile?.first_name} {profile?.last_name}
+        </h2>
+        <p className="text-gray-600">{profile?.email}</p>
+        {joinedDate && (
+          <div className="flex justify-center items-center text-sm text-muted-foreground mt-1">
+            <Calendar className="h-4 w-4 mr-1" />
+            Joined {joinedDate}
+          </div>
+        )}
+      </div>
+    </div>
+  </CardHeader>
 
-                {/* Sparkline chart */}
-                <div className="mt-4 w-full max-w-sm">
-                  <FollowerSparkline userId={authUser.id} />
-                </div>
+  <CardContent>
+    {/* Stats */}
+    <div className="flex justify-center gap-8 my-6 text-center">
+      <div>
+        <p className="text-lg font-semibold">
+          <FollowerCount viewedUserId={authUser.id} />
+        </p>
+        <p className="text-sm text-gray-500">Followers</p>
+      </div>
+      <div>
+        <p className="text-lg font-semibold">{followingCount ?? 0}</p>
+        <p className="text-sm text-gray-500">Following</p>
+      </div>
+    </div>
 
-                <p className="text-gray-600">{profile.email}</p>
+    {/* Sparkline */}
+    <div className="flex justify-center my-4">
+      <div className="w-full max-w-sm">
+        <FollowerSparkline userId={authUser.id} />
+      </div>
+    </div>
 
-                {joinedDate && (
-                  <div className="flex items-center mt-2 text-sm text-muted-foreground">
-                    <Calendar className="h-4 w-4 mr-1" />
-                    Joined {joinedDate}
-                  </div>
-                )}
-              </div>
+    {/* About */}
+    {profile?.bio && (
+      <div className="mt-6">
+        <h3 className="text-lg font-semibold mb-2">About Me</h3>
+        <p className="text-gray-700 whitespace-pre-line">{profile.bio}</p>
+      </div>
+    )}
 
-              {profile.bio && (
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">About Me</h3>
-                  <p className="text-gray-700 whitespace-pre-line">
-                    {profile.bio}
-                  </p>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <User size={64} className="mx-auto text-gray-400 mb-4" />
-              <p className="text-gray-600 mb-4">No profile information found</p>
-              <Link href="/user/settings/edit-profile">
-                <Button>Create Your Profile</Button>
-              </Link>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+    {/* Chat/Interactions */}
+    <div className="mt-8 border-t pt-6">
+      <h3 className="text-lg font-semibold mb-2">Chat</h3>
+      <p className="text-sm text-gray-500 mb-2">
+        Start a conversation with your followers.
+      </p>
+      {/* Your chat component goes here */}
+      <div className="rounded-md border p-4 bg-gray-50">
+        {/* Example placeholder */}
+        <p className="text-gray-400 text-sm text-center">Chat coming soon...</p>
+      </div>
+    </div>
+  </CardContent>
+</Card>
+
     </div>
   );
 }
