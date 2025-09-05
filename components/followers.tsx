@@ -20,6 +20,23 @@ export default function FollowersChart({ userId }: { userId: string }) {
   >([]);
   const [loading, setLoading] = useState(true);
 
+  // helper to format followers into cumulative counts
+  const formatData = (data: { created_at: string }[]) => {
+    const countsByDay: Record<string, number> = {};
+
+    data.forEach((row) => {
+      const day = new Date(row.created_at).toISOString().split("T")[0];
+      countsByDay[day] = (countsByDay[day] || 0) + 1;
+    });
+
+    const sortedDays = Object.keys(countsByDay).sort();
+    let runningTotal = 0;
+    return sortedDays.map((day) => {
+      runningTotal += countsByDay[day];
+      return { day, followers: runningTotal };
+    });
+  };
+
   useEffect(() => {
     async function fetchFollowers() {
       setLoading(true);
@@ -34,24 +51,40 @@ export default function FollowersChart({ userId }: { userId: string }) {
         return;
       }
 
-      const countsByDay: Record<string, number> = {};
-      data.forEach((row) => {
-        const day = new Date(row.created_at).toISOString().split("T")[0];
-        countsByDay[day] = (countsByDay[day] || 0) + 1;
-      });
-
-      const sortedDays = Object.keys(countsByDay).sort();
-      let runningTotal = 0;
-      const formatted = sortedDays.map((day) => {
-        runningTotal += countsByDay[day];
-        return { day, followers: runningTotal };
-      });
-
-      setChartData(formatted);
+      setChartData(formatData(data));
       setLoading(false);
     }
 
     fetchFollowers();
+
+    // subscribe to INSERT + DELETE in real-time
+    const channel = supabase
+      .channel("realtime-followers")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "follows",
+          filter: `following_id=eq.${userId}`,
+        },
+        async () => {
+          // Re-fetch followers on change
+          const { data } = await supabase
+            .from("follows")
+            .select("created_at")
+            .eq("following_id", userId);
+
+          if (data) {
+            setChartData(formatData(data));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [userId]);
 
   if (loading) {
@@ -73,7 +106,10 @@ export default function FollowersChart({ userId }: { userId: string }) {
   return (
     <div className="w-full h-64">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={chartData}>
+        <LineChart
+          data={chartData}
+          key={chartData.length} // force re-animation on dataset changes
+        >
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="day" />
           <YAxis allowDecimals={false} />
@@ -83,11 +119,11 @@ export default function FollowersChart({ userId }: { userId: string }) {
             dataKey="followers"
             stroke="#2563eb"
             strokeWidth={3}
-            dot={{ r: 4 }} // small dots on data points
-            activeDot={{ r: 6 }} // highlight active dot on hover
+            dot={{ r: 4 }}
+            activeDot={{ r: 6 }}
             isAnimationActive={true}
-            animationDuration={1200}
-            animationEasing="ease-out"
+            animationDuration={800}
+            animationEasing="ease-in-out"
           />
         </LineChart>
       </ResponsiveContainer>
