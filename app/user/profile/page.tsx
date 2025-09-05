@@ -8,7 +8,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Profile } from "@/components/interfaces";
 import FollowerCount from "@/components/followers-count";
-import FollowerSparkline from "@/components/followerSparkline";
+import FollowerSparkline from "@/components/follower-sparkline";
 
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -39,7 +39,7 @@ export default async function ProfilePage() {
   const { count: followingCount } = await supabase
     .from("follows")
     .select("*", { count: "exact", head: true })
-    .eq("follower_id", authUser.id); // ✅ corrected: who this user is following
+    .eq("follower_id", authUser.id); 
 
   const profile: Profile | null = profileData
     ? {
@@ -93,7 +93,7 @@ export default async function ProfilePage() {
                   {(followingCount ?? 0) === 1 ? "Following" : "Following"}
                 </p>
 
-                {/* ✅ Sparkline chart */}
+                {/* Sparkline chart */}
                 <div className="mt-4 w-full max-w-sm">
                   <FollowerSparkline userId={authUser.id} />
                 </div>
