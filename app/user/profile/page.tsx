@@ -2,12 +2,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { User, Calendar, Edit } from "lucide-react";
+import { User, Calendar } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Profile } from "@/components/interfaces";
 import FollowerCount from "@/components/followers-count";
+import FollowerSparkline from "@/components/followerSparkline";
 
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -29,16 +30,16 @@ export default async function ProfilePage() {
       })
     : "";
 
-  const { data: profileData, error: profileError } = await supabase
+  const { data: profileData } = await supabase
     .from("profiles")
     .select("*")
     .eq("id", authUser.id)
     .single();
 
-  const { count: followingCount, error: followingError } = await supabase
+  const { count: followingCount } = await supabase
     .from("follows")
     .select("*", { count: "exact", head: true })
-    .eq("following_id", authUser.id);
+    .eq("follower_id", authUser.id); // ✅ corrected: who this user is following
 
   const profile: Profile | null = profileData
     ? {
@@ -51,7 +52,6 @@ export default async function ProfilePage() {
       }
     : null;
 
-  // Page renders immediately with all data loaded!
   return (
     <div className="container mx-auto py-8 px-4 max-w-4xl">
       <div className="flex justify-between items-center mb-6">
@@ -81,6 +81,7 @@ export default async function ProfilePage() {
                   </div>
                 )}
 
+                {/* Followers + Following */}
                 <div className="flex items-center gap-1 text-black">
                   <span className="font-semibold">
                     <FollowerCount viewedUserId={authUser.id} />
@@ -89,8 +90,14 @@ export default async function ProfilePage() {
                 </div>
                 <p>
                   {followingCount ?? 0}{" "}
-                  {(followingCount ?? 0) > 1 ? "following" : "following"}
+                  {(followingCount ?? 0) === 1 ? "Following" : "Following"}
                 </p>
+
+                {/* ✅ Sparkline chart */}
+                <div className="mt-4 w-full max-w-sm">
+                  <FollowerSparkline userId={authUser.id} />
+                </div>
+
                 <p className="text-gray-600">{profile.email}</p>
 
                 {joinedDate && (
